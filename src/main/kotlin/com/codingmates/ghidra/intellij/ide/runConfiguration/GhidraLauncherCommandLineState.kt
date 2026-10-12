@@ -1,10 +1,15 @@
 package com.codingmates.ghidra.intellij.ide.runConfiguration
 
+import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationException
+import com.codingmates.ghidra.intellij.ide.installation.GhidraLaunchPropertiesParser
+import com.codingmates.ghidra.intellij.ide.installation.GhidraPlatform
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.application.BaseJavaApplicationCommandLineState
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.JavaParametersUtil
+import java.nio.file.Path
 import org.jetbrains.annotations.NotNull
 
 
@@ -29,7 +34,36 @@ class GhidraLauncherCommandLineState(
             javaParameters.programParametersList.add("ghidra.GhidraRun")
         }
         javaParameters.programParametersList.addParametersString(configuration.getArgs())
-        javaParameters.vmParametersList.addAll(GHIDRA_CLI_OPTS)
+        val installationPath = GhidraFacet.findAnyInProject(project)?.installationPath
+            ?: throw ExecutionException(
+                "No Ghidra facet is configured for this project. " +
+                    "Configure a Ghidra facet before launching."
+            )
+
+        try {
+            val launchPropertiesPath = Path.of(installationPath)
+                .toRealPath()
+                .resolve("support/launch.properties")
+
+            val launchProperties = GhidraLaunchPropertiesParser.parse(launchPropertiesPath)
+
+            javaParameters.vmParametersList.addAll(
+                launchProperties.vmArgumentsFor(GhidraPlatform.current())
+            )
+        }
+        catch (e: GhidraInstallationException) {
+            throw ExecutionException(
+                "Failed to read Ghidra launch properties: ${e.message}",
+                e,
+            )
+        }
+        catch (e: Exception) {
+            throw ExecutionException(
+                "Failed to resolve Ghidra installation path: $installationPath",
+                e,
+            )
+        }
+
         JavaParametersUtil.configureProject(
             project,
             javaParameters,
@@ -48,11 +82,5 @@ class GhidraLauncherCommandLineState(
             )
         }
         return javaParameters
-    }
-
-    companion object {
-        private val GHIDRA_CLI_OPTS = listOf(
-            "-Djava.system.class.loader=ghidra.GhidraClassLoader"
-        )
     }
 }
