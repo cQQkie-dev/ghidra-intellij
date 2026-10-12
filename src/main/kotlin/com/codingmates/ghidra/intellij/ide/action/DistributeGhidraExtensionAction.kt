@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.action
 
+import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArtifactFinder
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommand
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandBuilder
@@ -87,10 +88,20 @@ class DistributeGhidraExtensionAction : DumbAwareAction(
                         ).runProcess()
 
                         if (output.exitCode == 0) {
+                            val artifact = GhidraExtensionArtifactFinder.findNewest(projectRoot)
+
+                            val content = if (artifact != null) {
+                                "Extension distribution completed successfully.<br/>" +
+                                    "<code>${StringUtil.escapeXmlEntities(artifact.toString())}</code>"
+                            }
+                            else {
+                                "Extension distribution completed successfully, but no ZIP artifact was found in dist/."
+                            }
+
                             notify(
                                 project,
                                 "Ghidra Extension Distributed",
-                                "Extension distribution completed successfully.",
+                                content,
                                 NotificationType.INFORMATION,
                             )
                         }
