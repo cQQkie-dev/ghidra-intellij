@@ -2,9 +2,10 @@ package com.codingmates.ghidra.intellij.ide.facet
 
 import com.codingmates.ghidra.intellij.ide.GhidraBundle
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
-import com.intellij.openapi.application.ApplicationManager
 import com.codingmates.ghidra.intellij.ide.facet.model.isGhidraInstallationPath
 import com.codingmates.ghidra.intellij.ide.facet.model.isGhidraSourcesPath
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.facet.ui.FacetEditorContext
 import com.intellij.facet.ui.FacetEditorTab
 import com.intellij.facet.ui.FacetEditorValidator
@@ -12,19 +13,12 @@ import com.intellij.facet.ui.FacetValidatorsManager
 import com.intellij.facet.ui.SlowFacetEditorValidator
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
-import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
-import com.intellij.openapi.ui.getCanonicalPath
-import com.intellij.openapi.ui.getPresentablePath
-import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -34,6 +28,7 @@ import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComboBox
 import org.jetbrains.annotations.Nls
 
 class GhidraFacetConfigurationEditor(
@@ -60,21 +55,24 @@ class GhidraFacetConfigurationEditor(
     override fun createComponent() = panel {
         group("Ghidra Settings") {
             row(GhidraBundle.message("ghidra.facet.editor.installation")) {
-                val title = GhidraBundle.message("ghidra.facet.editor.installation.dialog.title")
-                val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                    .withPathToTextConvertor(::getPresentablePath)
-                    .withTextToPathConvertor(::getCanonicalPath)
-                    .withTitle(title)
+                val installations = registeredInstallationPaths()
+                val comboBox = JComboBox(installations.toTypedArray())
 
-                textFieldWithBrowseButton(fileChooserDescriptor, context.project)
-                    .bindText(installationDir.toUiPathProperty())
-                    .applyToComponent { setEmptyState(GhidraBundle.message("ghidra.facet.editor.installation.empty")) }
+                comboBox.selectedItem = installationDir.get()
+                comboBox.addActionListener {
+                    (comboBox.selectedItem as? String)?.let(installationDir::set)
+                }
+
+                cell(comboBox)
                     .align(AlignX.FILL)
 
-                button("Use Default") {
-                    installationRegistry.defaultConfiguredPath()?.let { defaultPath ->
-                        installationDir.set(defaultPath.toString())
-                    }
+                button("Manage...") {
+                    ShowSettingsUtil.getInstance().showSettingsDialog(
+                        context.project,
+                        "Ghidra Installations",
+                    )
+
+                    refreshInstallationComboBox(comboBox)
                 }
             }
         }
@@ -95,6 +93,28 @@ class GhidraFacetConfigurationEditor(
 
             }
         }.visibleIf(applied)
+    }
+
+    private fun registeredInstallationPaths(): List<String> {
+        val paths = installationRegistry.configuredPaths()
+            .map(Path::toString)
+            .toMutableList()
+
+        val currentPath = installationDir.get()
+        if (currentPath.isNotBlank() && currentPath !in paths) {
+            paths.add(0, currentPath)
+        }
+
+        return paths
+    }
+
+    private fun refreshInstallationComboBox(comboBox: JComboBox<String>) {
+        val selectedPath = installationDir.get()
+        comboBox.removeAllItems()
+
+        registeredInstallationPaths().forEach(comboBox::addItem)
+
+        comboBox.selectedItem = selectedPath
     }
 
     inner class GhidraInstallationValidator : FacetEditorValidator(), SlowFacetEditorValidator {
