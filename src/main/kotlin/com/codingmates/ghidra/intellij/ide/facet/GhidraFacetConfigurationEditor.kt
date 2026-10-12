@@ -1,6 +1,8 @@
 package com.codingmates.ghidra.intellij.ide.facet
 
 import com.codingmates.ghidra.intellij.ide.GhidraBundle
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
+import com.intellij.openapi.application.ApplicationManager
 import com.codingmates.ghidra.intellij.ide.facet.model.isGhidraInstallationPath
 import com.codingmates.ghidra.intellij.ide.facet.model.isGhidraSourcesPath
 import com.intellij.facet.ui.FacetEditorContext
@@ -46,6 +48,10 @@ class GhidraFacetConfigurationEditor(
     private val version = propertyGraph.property(state.version.orEmpty())
     private val applied = propertyGraph.property(false)
 
+    private val installationRegistry: GhidraInstallationRegistryService
+        get() = ApplicationManager.getApplication()
+            .getService(GhidraInstallationRegistryService::class.java)
+
     init {
         validator.registerValidator(GhidraInstallationValidator())
         propertyGraph.afterPropagation { validator.validate() }
@@ -64,6 +70,12 @@ class GhidraFacetConfigurationEditor(
                     .bindText(installationDir.toUiPathProperty())
                     .applyToComponent { setEmptyState(GhidraBundle.message("ghidra.facet.editor.installation.empty")) }
                     .align(AlignX.FILL)
+
+                button("Use Default") {
+                    installationRegistry.defaultConfiguredPath()?.let { defaultPath ->
+                        installationDir.set(defaultPath.toString())
+                    }
+                }
             }
         }
 
@@ -109,7 +121,10 @@ class GhidraFacetConfigurationEditor(
     @Throws(ConfigurationException::class)
     override fun apply() {
         try {
-            state.installationPath = installationDir.get()
+            val registeredInstallation =
+                installationRegistry.register(Path.of(installationDir.get()))
+
+            state.installationPath = registeredInstallation.configuredPath.toString()
             state.resolve()
 
             settingsDir.set(state.settingsPath.orEmpty())
