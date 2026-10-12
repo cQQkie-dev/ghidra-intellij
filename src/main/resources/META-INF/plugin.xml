@@ -13,6 +13,10 @@
         <programRunner id="Run" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherRunner"/>
         <programRunner id="Debug" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherDebugRunner"/>
         <facetType implementation="com.codingmates.ghidra.intellij.ide.facet.GhidraFacetType" />
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationsConfigurable"
+                displayName="Ghidra Installations" />
     </extensions>
 
     <actions>

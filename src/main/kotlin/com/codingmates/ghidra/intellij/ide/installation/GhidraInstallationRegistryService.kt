@@ -66,6 +66,54 @@ class GhidraInstallationRegistryService :
     }
 
     /**
+     * Replaces all registered installations with [configuredPaths].
+     *
+     * Duplicate paths resolving to the same canonical installation are collapsed. If
+     * [defaultConfiguredPath] is null, the first registered installation becomes the default.
+     */
+    fun replaceAll(
+        configuredPaths: List<Path>,
+        defaultConfiguredPath: Path?,
+    ) {
+        val discoveredByCanonicalPath = linkedMapOf<String, GhidraInstallation>()
+
+        configuredPaths.forEach { configuredPath ->
+            val installation = GhidraInstallationDiscovery.discover(configuredPath)
+            discoveredByCanonicalPath.putIfAbsent(
+                installation.canonicalPath.toString(),
+                installation,
+            )
+        }
+
+        val defaultCanonicalPath = when {
+            defaultConfiguredPath == null ->
+                discoveredByCanonicalPath.keys.firstOrNull().orEmpty()
+
+            else -> {
+                val defaultInstallation =
+                    GhidraInstallationDiscovery.discover(defaultConfiguredPath)
+                val canonicalPath = defaultInstallation.canonicalPath.toString()
+
+                require(discoveredByCanonicalPath.containsKey(canonicalPath)) {
+                    "Cannot select an unregistered Ghidra installation as default: $canonicalPath"
+                }
+
+                canonicalPath
+            }
+        }
+
+        state = GhidraInstallationRegistryState().apply {
+            this.defaultCanonicalPath = defaultCanonicalPath
+            installations = discoveredByCanonicalPath.values.map { installation ->
+                RegisteredGhidraInstallationState(
+                    configuredPath = installation.configuredPath.toString(),
+                    canonicalPath = installation.canonicalPath.toString(),
+                )
+            }.toMutableList()
+        }
+    }
+
+    /**
      * Removes the installation identified by its canonical path.
      */
     fun unregister(canonicalPath: Path) {
