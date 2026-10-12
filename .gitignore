@@ -1,0 +1,12 @@
+.idea
+.intellijPlatform
+*.iml
+.gradle
+out/
+build/
+gen/
+deps/
+exampleProject
+testData
+.DS_Store
+gradle-*.properties
