@@ -9,6 +9,7 @@
     <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Ghidra" displayType="BALLOON" />
         <configurationType implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherConfigurationType"/>
         <programRunner id="Run" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherRunner"/>
         <programRunner id="Debug" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherDebugRunner"/>
@@ -20,6 +21,12 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
+        <action
+                id="com.codingmates.ghidra.intellij.DistributeGhidraExtension"
+                class="com.codingmates.ghidra.intellij.ide.action.DistributeGhidraExtensionAction"
+                text="Distribute Ghidra Extension"
+                description="Build and package the current Ghidra extension">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
     </actions>
 </idea-plugin>
