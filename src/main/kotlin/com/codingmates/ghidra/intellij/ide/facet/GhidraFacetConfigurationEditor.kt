@@ -144,6 +144,11 @@ class GhidraFacetConfigurationEditor(
             val registeredInstallation =
                 installationRegistry.register(Path.of(installationDir.get()))
 
+            val ghidraLibraryName =
+                "Ghidra ${registeredInstallation.version} " +
+                    "${registeredInstallation.releaseName} " +
+                    "(${registeredInstallation.canonicalPath})"
+
             state.installationPath = registeredInstallation.configuredPath.toString()
             state.resolve()
 
@@ -183,8 +188,8 @@ class GhidraFacetConfigurationEditor(
                 val registrar = LibraryTablesRegistrar.getInstance()
                 val projectLibTable = registrar.getLibraryTable(context.project)
                 val libModel = projectLibTable.modifiableModel
-                val ghidraLib = projectLibTable.getLibraryByName("Ghidra")
-                    ?: libModel.createLibrary("Ghidra")
+                val ghidraLib = projectLibTable.getLibraryByName(ghidraLibraryName)
+                    ?: libModel.createLibrary(ghidraLibraryName)
                 libModel.commit()
 
                 ghidraLib.modifiableModel.apply {
@@ -202,10 +207,15 @@ class GhidraFacetConfigurationEditor(
                 }.commit()
 
                 rootManager.modifiableModel.apply {
-                    val alreadyAttached = orderEntries
+                    orderEntries
                         .filterIsInstance<LibraryOrderEntry>()
-                        .any { it.libraryName == "Ghidra" }
-                    if (!alreadyAttached) addLibraryEntry(ghidraLib)
+                        .filter { libraryEntry ->
+                            libraryEntry.libraryName == "Ghidra" ||
+                                libraryEntry.libraryName?.startsWith("Ghidra ") == true
+                        }
+                        .forEach(::removeOrderEntry)
+
+                    addLibraryEntry(ghidraLib)
                 }.commit()
             }
         } catch (e: ConfigurationException) {
