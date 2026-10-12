@@ -72,10 +72,33 @@ class GhidraInstallationDiscoveryTest {
         assertTrue(exception.message!!.contains("application.version"))
     }
 
-    private fun createInstallation(applicationProperties: String): Path {
+    @Test
+    fun `rejects installation without extension build script`() {
         val installation = Files.createTempDirectory("ghidra-installation")
         val ghidraDirectory = installation.resolve("Ghidra").createDirectories()
+        ghidraDirectory.resolve("application.properties").writeText(
+            """
+            application.version=12.1.4
+            application.release.name=PUBLIC
+            """.trimIndent()
+        )
+
+        val exception = assertFailsWith<GhidraInstallationException> {
+            GhidraInstallationDiscovery.discover(installation)
+        }
+
+        assertTrue(exception.message!!.contains("buildExtension.gradle"))
+    }
+
+    private fun createInstallation(applicationProperties: String): Path {
+        val installation = Files.createTempDirectory("ghidra-installation")
+
+        val ghidraDirectory = installation.resolve("Ghidra").createDirectories()
         ghidraDirectory.resolve("application.properties").writeText(applicationProperties)
+
+        val supportDirectory = installation.resolve("support").createDirectories()
+        supportDirectory.resolve("buildExtension.gradle").writeText("// test fixture")
+
         return installation
     }
 }

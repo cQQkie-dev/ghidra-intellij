@@ -35,6 +35,15 @@ object GhidraInstallationDiscovery {
             )
         }
 
+        val buildExtensionScript =
+            canonicalPath.resolve("support/buildExtension.gradle")
+
+        if (!Files.isRegularFile(buildExtensionScript)) {
+            throw GhidraInstallationException(
+                "Not a usable Ghidra installation: missing $buildExtensionScript"
+            )
+        }
+
         val properties = Properties()
         try {
             Files.newInputStream(applicationPropertiesPath).use(properties::load)
