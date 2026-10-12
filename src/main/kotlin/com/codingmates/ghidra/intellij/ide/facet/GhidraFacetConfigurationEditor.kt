@@ -177,6 +177,9 @@ class GhidraFacetConfigurationEditor(
                         .mapNotNull(Path::toVfs)
                         .toList()
 
+                val documentationRoots: List<VirtualFile> =
+                    listOfNotNull(registeredInstallation.apiJavadocPath.toVfs())
+
                 val registrar = LibraryTablesRegistrar.getInstance()
                 val projectLibTable = registrar.getLibraryTable(context.project)
                 val libModel = projectLibTable.modifiableModel
@@ -185,12 +188,17 @@ class GhidraFacetConfigurationEditor(
                 libModel.commit()
 
                 ghidraLib.modifiableModel.apply {
-                    listOf(OrderRootType.CLASSES, OrderRootType.SOURCES).forEach { rootType ->
+                    listOf(
+                        OrderRootType.CLASSES,
+                        OrderRootType.SOURCES,
+                        OrderRootType.DOCUMENTATION,
+                    ).forEach { rootType ->
                         getUrls(rootType).forEach { removeRoot(it, rootType) }
                     }
 
                     classRoots.forEach { addRoot(it, OrderRootType.CLASSES) }
                     sourceRoots.forEach { addRoot(it, OrderRootType.SOURCES) }
+                    documentationRoots.forEach { addRoot(it, OrderRootType.DOCUMENTATION) } 
                 }.commit()
 
                 rootManager.modifiableModel.apply {
