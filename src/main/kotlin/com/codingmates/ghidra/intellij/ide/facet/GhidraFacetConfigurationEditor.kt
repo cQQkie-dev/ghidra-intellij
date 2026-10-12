@@ -198,7 +198,7 @@ class GhidraFacetConfigurationEditor(
 
                     classRoots.forEach { addRoot(it, OrderRootType.CLASSES) }
                     sourceRoots.forEach { addRoot(it, OrderRootType.SOURCES) }
-                    documentationRoots.forEach { addRoot(it, OrderRootType.DOCUMENTATION) } 
+                    documentationRoots.forEach { addRoot(it, OrderRootType.DOCUMENTATION) }
                 }.commit()
 
                 rootManager.modifiableModel.apply {
