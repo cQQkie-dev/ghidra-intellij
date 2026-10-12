@@ -28,5 +28,12 @@
                 description="Build and package the current Ghidra extension">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
+            <action
+                id="com.codingmates.ghidra.intellij.InstallGhidraExtension"
+                class="com.codingmates.ghidra.intellij.ide.action.InstallGhidraExtensionAction"
+                text="Install Latest Ghidra Extension"
+                description="Install the newest built Ghidra extension archive">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
     </actions>
 </idea-plugin>

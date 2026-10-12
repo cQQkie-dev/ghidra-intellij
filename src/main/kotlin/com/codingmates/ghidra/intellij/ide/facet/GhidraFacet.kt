@@ -19,6 +19,9 @@ class GhidraFacet(
     val installationPath: String
         get() = configuration.ghidraState.installationPath
 
+    val settingsPath: String?
+        get() = configuration.ghidraState.settingsPath
+
     companion object {
         fun findAnyInProject(project: Project): GhidraFacet? = ModuleManager.getInstance(project)
             .modules.firstNotNullOfOrNull { FacetManager.getInstance(it).getFacetByType(FACET_TYPE_ID) }
