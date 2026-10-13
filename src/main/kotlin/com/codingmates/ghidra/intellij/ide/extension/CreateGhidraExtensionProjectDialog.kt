@@ -12,6 +12,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JCheckBox
+import javax.swing.BoxLayout
+import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -23,8 +25,14 @@ class CreateGhidraExtensionProjectDialog(
 
     private val projectNameField = JTextField()
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
-    private val pluginTemplateCheckbox = JCheckBox("Plugin — extends the Ghidra user interface")
-    private val analyzerTemplateCheckbox = JCheckBox("Analyzer — extends Ghidra analysis")
+    private val pluginTemplateCheckbox = JCheckBox("Plugin - extends the Ghidra user interface")
+    private val analyzerTemplateCheckbox = JCheckBox("Analyzer - extends Ghidra analysis")
+
+    private val templatesPanel = JPanel().apply {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        add(pluginTemplateCheckbox)
+        add(analyzerTemplateCheckbox)
+    }
 
     init {
         title = "Create Ghidra Extension Project"
@@ -91,12 +99,7 @@ class CreateGhidraExtensionProjectDialog(
         }
 
         row("Templates:") {
-            cell(pluginTemplateCheckbox)
-                .align(AlignX.FILL)
-        }
-
-        row {
-            cell(analyzerTemplateCheckbox)
+            cell(templatesPanel)
                 .align(AlignX.FILL)
         }
     }
