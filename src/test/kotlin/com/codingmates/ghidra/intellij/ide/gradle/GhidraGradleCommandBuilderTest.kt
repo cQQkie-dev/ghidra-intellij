@@ -86,4 +86,29 @@ class GhidraGradleCommandBuilderTest {
         )
         assertFalse(command.usesWrapper)
     }
+
+    @Test
+    fun `builds Gradle Wrapper generation command`() {
+        val projectRoot = Files.createTempDirectory("ghidra-project")
+        val gradleExecutable = Files.createTempFile("gradle", ".bin")
+
+        val command = GhidraGradleCommandBuilder.generateWrapper(
+            projectRoot = projectRoot,
+            gradleExecutablePath = gradleExecutable,
+        )
+
+        assertEquals(
+            gradleExecutable.toAbsolutePath().normalize().toString(),
+            command.executable,
+        )
+        assertEquals(
+            listOf("wrapper"),
+            command.arguments,
+        )
+        assertEquals(
+            projectRoot.toAbsolutePath().normalize(),
+            command.workingDirectory,
+        )
+        assertFalse(command.usesWrapper)
+    }
 }

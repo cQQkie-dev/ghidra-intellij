@@ -7,6 +7,7 @@ import java.nio.file.Path
 object GhidraGradleCommandBuilder {
 
     const val DISTRIBUTE_EXTENSION_TASK = "distributeExtension"
+    const val WRAPPER_TASK = "wrapper"
 
     /**
      * Builds the Gradle command used to package a Ghidra extension.
@@ -33,6 +34,32 @@ object GhidraGradleCommandBuilder {
             ),
             workingDirectory = normalizedProjectRoot,
             usesWrapper = wrapperPath != null,
+        )
+    }
+
+    fun hasWrapper(
+        projectRoot: Path,
+        platform: GhidraPlatform = GhidraPlatform.current(),
+    ): Boolean =
+        wrapperPath(projectRoot.toAbsolutePath().normalize(), platform) != null
+    
+    fun generateWrapper(
+        projectRoot: Path,
+        gradleExecutablePath: Path,
+    ): GhidraGradleCommand {
+        val normalizedProjectRoot = projectRoot.toAbsolutePath().normalize()
+        val normalizedGradleExecutablePath =
+            gradleExecutablePath.toAbsolutePath().normalize()
+
+        require(Files.isRegularFile(normalizedGradleExecutablePath)) {
+            "Gradle executable does not exist: $normalizedGradleExecutablePath"
+        }
+
+        return GhidraGradleCommand(
+            executable = normalizedGradleExecutablePath.toString(),
+            arguments = listOf(WRAPPER_TASK),
+            workingDirectory = normalizedProjectRoot,
+            usesWrapper = false,
         )
     }
 
