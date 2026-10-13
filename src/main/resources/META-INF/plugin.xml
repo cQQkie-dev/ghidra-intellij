@@ -43,6 +43,13 @@
             <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
         <action
+                id="com.codingmates.ghidra.intellij.CreateGhidraDevelopmentLauncher"
+                class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraDevelopmentLauncherAction"
+                text="Create Ghidra Development Launcher"
+                description="Create a Ghidra Launcher Run Configuration for the current project">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+        <action
                 id="com.codingmates.ghidra.intellij.GenerateGhidraGradleWrapper"
                 class="com.codingmates.ghidra.intellij.ide.action.GenerateGhidraGradleWrapperAction"
                 text="Generate Ghidra Gradle Wrapper"
