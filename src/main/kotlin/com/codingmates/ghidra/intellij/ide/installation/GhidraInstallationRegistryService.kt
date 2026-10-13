@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -67,6 +68,36 @@ class GhidraInstallationRegistryService :
     }
 
     /**
+     * Returns the configured Gradle executable, if one exists.
+     */
+    fun gradleExecutablePath(): Path? =
+        state.gradleExecutablePath
+            .takeIf(String::isNotBlank)
+            ?.let(Path::of)
+
+    /**
+     * Sets or clears the optional Gradle executable used when projects do not contain a wrapper.
+     */
+    fun setGradleExecutablePath(executablePath: Path?) {
+        if (executablePath == null) {
+            state.gradleExecutablePath = ""
+            return
+        }
+
+        val normalizedPath = executablePath.toAbsolutePath().normalize()
+
+        require(Files.isRegularFile(normalizedPath)) {
+            "Gradle executable does not exist: $normalizedPath"
+        }
+
+        require(Files.isExecutable(normalizedPath)) {
+            "Gradle executable is not executable: $normalizedPath"
+        }
+
+        state.gradleExecutablePath = normalizedPath.toString()
+    }
+
+    /**
      * Returns the configured official Ghidra Skeleton template path, if one exists.
      */
     fun skeletonTemplatePath(): Path? =
@@ -125,10 +156,12 @@ class GhidraInstallationRegistryService :
         }
 
         val existingSkeletonTemplatePath = state.skeletonTemplatePath
+        val existingGradleExecutablePath = state.gradleExecutablePath
 
         state = GhidraInstallationRegistryState().apply {
             this.defaultCanonicalPath = defaultCanonicalPath
             this.skeletonTemplatePath = existingSkeletonTemplatePath
+            this.gradleExecutablePath = existingGradleExecutablePath
             installations = discoveredByCanonicalPath.values.map { installation ->
                 RegisteredGhidraInstallationState(
                     configuredPath = installation.configuredPath.toString(),
@@ -194,6 +227,7 @@ class GhidraInstallationRegistryService :
  */
 class GhidraInstallationRegistryState {
     var defaultCanonicalPath: String = ""
+    var gradleExecutablePath: String = ""
     var skeletonTemplatePath: String = ""
     var installations: MutableList<RegisteredGhidraInstallationState> = mutableListOf()
 }

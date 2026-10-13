@@ -66,4 +66,24 @@ class GhidraGradleCommandBuilderTest {
         assertEquals("gradle", command.executable)
         assertFalse(command.usesWrapper)
     }
+
+    @Test
+    fun `uses configured Gradle executable when no wrapper exists`() {
+        val projectRoot = Files.createTempDirectory("ghidra-extension")
+        val ghidraInstallation = Files.createTempDirectory("ghidra-installation")
+        val gradleExecutable = Files.createTempFile("gradle", ".bin")
+
+        val command = GhidraGradleCommandBuilder.distributeExtension(
+            projectRoot = projectRoot,
+            ghidraInstallationPath = ghidraInstallation,
+            gradleExecutablePath = gradleExecutable,
+            platform = GhidraPlatform.LINUX,
+        )
+
+        assertEquals(
+            gradleExecutable.toAbsolutePath().normalize().toString(),
+            command.executable,
+        )
+        assertFalse(command.usesWrapper)
+    }
 }

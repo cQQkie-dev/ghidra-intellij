@@ -28,6 +28,7 @@ class GhidraInstallationsConfigurable : Configurable {
     private val installationListModel = DefaultListModel<Path>()
     private val installationList = JBList(installationListModel)
     private val defaultInstallationLabel = JBLabel()
+    private val gradleExecutableField = JTextField()
     private val skeletonTemplateField = JTextField()
     private var pendingDefaultPath: Path? = null
 
@@ -51,6 +52,31 @@ class GhidraInstallationsConfigurable : Configurable {
 
         val centerPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
         centerPanel.add(JBScrollPane(installationList), BorderLayout.CENTER)
+
+        val gradleExecutablePanel = JPanel(BorderLayout(JBUI.scale(6), 0))
+        gradleExecutablePanel.add(
+            JBLabel("Gradle executable:"),
+            BorderLayout.WEST,
+        )
+        gradleExecutablePanel.add(
+            gradleExecutableField,
+            BorderLayout.CENTER,
+        )
+
+        val browseGradleButton = JButton("Browse...")
+        browseGradleButton.addActionListener {
+            val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+            descriptor.title = "Select Gradle Executable"
+
+            FileChooser.chooseFile(descriptor, null, null)?.let { selectedFile ->
+                gradleExecutableField.text = selectedFile.path
+            }
+        }
+
+        gradleExecutablePanel.add(
+            browseGradleButton,
+            BorderLayout.EAST,
+        )
 
         val skeletonTemplatePanel = JPanel(BorderLayout(JBUI.scale(6), 0))
         skeletonTemplatePanel.add(
@@ -77,7 +103,14 @@ class GhidraInstallationsConfigurable : Configurable {
             BorderLayout.EAST,
         )
 
-        centerPanel.add(skeletonTemplatePanel, BorderLayout.SOUTH)
+        val configurationPanel = JPanel(
+            java.awt.GridLayout(2, 1, 0, JBUI.scale(6))
+        )
+        configurationPanel.add(gradleExecutablePanel)
+        configurationPanel.add(skeletonTemplatePanel)
+
+        centerPanel.add(configurationPanel, BorderLayout.SOUTH)
+
         panel.add(centerPanel, BorderLayout.CENTER)
 
         val addButton = JButton("Add...")
@@ -112,6 +145,12 @@ class GhidraInstallationsConfigurable : Configurable {
         val currentDefault = registry.defaultConfiguredPath()?.toString()
         val pendingDefault = pendingDefaultPath?.toString()
 
+        val currentGradleExecutable =
+            registry.gradleExecutablePath()?.toString().orEmpty()
+
+        val pendingGradleExecutable =
+            gradleExecutableField.text.trim()
+
         val currentSkeletonTemplate =
             registry.skeletonTemplatePath()?.toString().orEmpty()
 
@@ -120,6 +159,7 @@ class GhidraInstallationsConfigurable : Configurable {
 
         return currentPaths != pendingPaths ||
             currentDefault != pendingDefault ||
+            currentGradleExecutable != pendingGradleExecutable ||
             currentSkeletonTemplate != pendingSkeletonTemplate
     }
 
@@ -128,17 +168,27 @@ class GhidraInstallationsConfigurable : Configurable {
         val configuredPaths = (0 until installationListModel.size)
             .map { installationListModel.getElementAt(it) }
 
+        val gradleExecutablePath = gradleExecutableField.text
+            .trim()
+            .takeIf(String::isNotEmpty)
+            ?.let(Path::of)
+
         val skeletonTemplatePath = skeletonTemplateField.text
             .trim()
             .takeIf(String::isNotEmpty)
             ?.let(Path::of)
 
         try {
+            if (gradleExecutablePath != null) {
+                registry.setGradleExecutablePath(gradleExecutablePath)
+            }
+
             if (skeletonTemplatePath != null) {
                 GhidraSkeletonTemplateDiscovery.discover(skeletonTemplatePath)
             }
 
             registry.replaceAll(configuredPaths, pendingDefaultPath)
+            registry.setGradleExecutablePath(gradleExecutablePath)
             registry.setSkeletonTemplatePath(skeletonTemplatePath)
         }
         catch (e: GhidraInstallationException) {
@@ -158,6 +208,8 @@ class GhidraInstallationsConfigurable : Configurable {
 
         registry.configuredPaths().forEach(installationListModel::addElement)
         pendingDefaultPath = registry.defaultConfiguredPath()
+        gradleExecutableField.text =
+            registry.gradleExecutablePath()?.toString().orEmpty()
         skeletonTemplateField.text =
             registry.skeletonTemplatePath()?.toString().orEmpty()
 

@@ -17,13 +17,16 @@ object GhidraGradleCommandBuilder {
     fun distributeExtension(
         projectRoot: Path,
         ghidraInstallationPath: Path,
+        gradleExecutablePath: Path? = null,
         platform: GhidraPlatform = GhidraPlatform.current(),
     ): GhidraGradleCommand {
         val normalizedProjectRoot = projectRoot.toAbsolutePath().normalize()
         val wrapperPath = wrapperPath(normalizedProjectRoot, platform)
 
         return GhidraGradleCommand(
-            executable = wrapperPath?.toString() ?: "gradle",
+            executable = wrapperPath?.toString()
+                ?: gradleExecutablePath?.toAbsolutePath()?.normalize()?.toString()
+                ?: "gradle",
             arguments = listOf(
                 "-PGHIDRA_INSTALL_DIR=${ghidraInstallationPath.toAbsolutePath().normalize()}",
                 DISTRIBUTE_EXTENSION_TASK,

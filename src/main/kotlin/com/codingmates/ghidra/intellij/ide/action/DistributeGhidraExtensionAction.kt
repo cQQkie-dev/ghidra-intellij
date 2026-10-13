@@ -4,6 +4,7 @@ import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArtifactFind
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommand
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandBuilder
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -26,6 +27,11 @@ class DistributeGhidraExtensionAction : DumbAwareAction(
     "Build and package the current Ghidra extension",
     null,
 ) {
+
+    private val installationRegistry: GhidraInstallationRegistryService
+        get() = com.intellij.openapi.application.ApplicationManager
+            .getApplication()
+            .getService(GhidraInstallationRegistryService::class.java)
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -71,6 +77,7 @@ class DistributeGhidraExtensionAction : DumbAwareAction(
         val command = GhidraGradleCommandBuilder.distributeExtension(
             projectRoot = projectRoot,
             ghidraInstallationPath = Path.of(installationPath),
+            gradleExecutablePath = installationRegistry.gradleExecutablePath(),
         )
 
         ProgressManager.getInstance().run(
