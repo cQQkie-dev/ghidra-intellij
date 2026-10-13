@@ -7,6 +7,8 @@ import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegist
 import com.codingmates.ghidra.intellij.ide.script.CreateGhidraScriptProjectDialog
 import com.codingmates.ghidra.intellij.ide.script.GhidraScriptProjectGenerationException
 import com.codingmates.ghidra.intellij.ide.script.GhidraScriptProjectGenerator
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -177,17 +179,28 @@ class CreateGhidraScriptProjectAction : DumbAwareAction(
         wrapperMessage: String,
         notificationType: NotificationType,
     ) {
-        NotificationGroupManager.getInstance()
+        val notification = NotificationGroupManager.getInstance()
             .getNotificationGroup("Ghidra")
             .createNotification(
                 "Ghidra Script Project Created",
                 "Created project at:<br/><code>${
                     StringUtil.escapeXmlEntities(projectDirectory.toString())
                 }</code><br/><br/>$wrapperMessage<br/><br/>" +
-                    "Open the directory as a Gradle project in IntelliJ.",
+                    "Open the project to import it through IntelliJ's Gradle integration.",
                 notificationType,
             )
-            .notify(project)
+
+        notification.addAction(
+            NotificationAction.createSimple("Open Project") {
+                ProjectUtil.openOrImport(
+                    projectDirectory,
+                    null,
+                    true,
+                )
+            }
+        )
+
+        notification.notify(project)
     }
 
 }
