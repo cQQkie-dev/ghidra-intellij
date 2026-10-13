@@ -5,12 +5,14 @@ import java.nio.file.Path
 data class GhidraScriptProjectSpec(
     val name: String,
     val projectParentDirectory: Path,
+    val ghidraInstallationPath: Path,
 )
 
 data class GeneratedGhidraScriptProject(
     val projectDirectory: Path,
     val buildFile: Path,
     val settingsFile: Path,
+    val localGhidraPropertiesFile: Path,
     val scriptDirectory: Path,
 )
 

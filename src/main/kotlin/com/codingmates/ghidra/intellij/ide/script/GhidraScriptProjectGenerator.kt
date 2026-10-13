@@ -32,6 +32,7 @@ object GhidraScriptProjectGenerator {
             val buildFile = projectDirectory.resolve("build.gradle")
             val settingsFile = projectDirectory.resolve("settings.gradle")
             val gitIgnoreFile = projectDirectory.resolve(".gitignore")
+            val localGhidraPropertiesFile = projectDirectory.resolve("ghidra-intellij.properties")
             val scriptDirectory = projectDirectory.resolve("ghidra_scripts")
 
             Files.writeString(
@@ -52,12 +53,19 @@ object GhidraScriptProjectGenerator {
                 StandardCharsets.UTF_8,
             )
 
+            Files.writeString(
+                localGhidraPropertiesFile,
+                "GHIDRA_INSTALL_DIR=${spec.ghidraInstallationPath.toAbsolutePath().normalize()}\n",
+                StandardCharsets.UTF_8,
+            )
+
             Files.createDirectories(scriptDirectory)
 
             return GeneratedGhidraScriptProject(
                 projectDirectory = projectDirectory,
                 buildFile = buildFile,
                 settingsFile = settingsFile,
+                localGhidraPropertiesFile = localGhidraPropertiesFile,
                 scriptDirectory = scriptDirectory,
             )
         }
@@ -92,13 +100,23 @@ object GhidraScriptProjectGenerator {
         //
         // The IntelliJ Ghidra plugin supplies this property automatically for supported actions.
 
+        def localGhidraProperties = new Properties()
+        def localGhidraPropertiesFile = file("ghidra-intellij.properties")
+
+        if (localGhidraPropertiesFile.isFile()) {
+            localGhidraPropertiesFile.withInputStream {
+                localGhidraProperties.load(it)
+            }
+        }
+
         def ghidraInstallDir =
             System.getenv("GHIDRA_INSTALL_DIR") ?:
             providers.gradleProperty("GHIDRA_INSTALL_DIR").orNull ?:
+            localGhidraProperties.getProperty("GHIDRA_INSTALL_DIR") ?:
             throw new GradleException(
                 "GHIDRA_INSTALL_DIR is not defined. " +
-                "Set it as an environment variable or pass " +
-                "-PGHIDRA_INSTALL_DIR=<path>."
+                "Set it as an environment variable, pass " +
+                "-PGHIDRA_INSTALL_DIR=<path>, or configure the IntelliJ Ghidra plugin."
             )
 
         apply from: new File(ghidraInstallDir).getCanonicalPath() +
@@ -119,5 +137,6 @@ object GhidraScriptProjectGenerator {
         build/
         .idea/
         *.iml
+        ghidra-intellij.properties
         """.trimIndent() + "\n"
 }

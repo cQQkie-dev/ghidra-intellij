@@ -1,6 +1,7 @@
 package com.codingmates.ghidra.intellij.ide.script
 
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.test.Test
@@ -18,6 +19,7 @@ class GhidraScriptProjectGeneratorTest {
             GhidraScriptProjectSpec(
                 name = "ExampleScripts",
                 projectParentDirectory = parentDirectory,
+                ghidraInstallationPath = Path.of("/example/ghidra"),
             )
         )
 
@@ -28,6 +30,11 @@ class GhidraScriptProjectGeneratorTest {
         assertTrue(generated.buildFile.exists())
         assertTrue(generated.settingsFile.exists())
         assertTrue(generated.scriptDirectory.exists())
+        assertTrue(generated.localGhidraPropertiesFile.exists())
+        assertEquals(
+            "GHIDRA_INSTALL_DIR=/example/ghidra\n",
+            generated.localGhidraPropertiesFile.readText(),
+        )
 
         assertTrue(
             generated.buildFile.readText().contains(
@@ -37,6 +44,16 @@ class GhidraScriptProjectGeneratorTest {
         assertTrue(
             generated.buildFile.readText().contains(
                 """srcDir "ghidra_scripts""""
+            )
+        )
+        assertTrue(
+            generated.buildFile.readText().contains(
+                """file("ghidra-intellij.properties")"""
+            )
+        )
+        assertTrue(
+            generated.projectDirectory.resolve(".gitignore").readText().contains(
+                "ghidra-intellij.properties"
             )
         )
         assertEquals(
@@ -54,6 +71,7 @@ class GhidraScriptProjectGeneratorTest {
                         name = "123 invalid project",
                         projectParentDirectory =
                             Files.createTempDirectory("ghidra-script-projects"),
+                        ghidraInstallationPath = Path.of("/example/ghidra"),
                     )
                 )
             }
@@ -71,6 +89,7 @@ class GhidraScriptProjectGeneratorTest {
                 GhidraScriptProjectSpec(
                     name = "ExampleScripts",
                     projectParentDirectory = parentDirectory,
+                    ghidraInstallationPath = Path.of("/example/ghidra"),
                 )
             )
         }
