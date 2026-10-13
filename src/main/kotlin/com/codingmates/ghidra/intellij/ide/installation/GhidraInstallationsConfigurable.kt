@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.installation
 
+import com.codingmates.ghidra.intellij.ide.extension.GhidraSkeletonTemplateDiscovery
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -17,6 +18,7 @@ import javax.swing.DefaultListModel
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JTextField
 
 /**
  * Application settings page for registered Ghidra runtime installations.
@@ -26,6 +28,7 @@ class GhidraInstallationsConfigurable : Configurable {
     private val installationListModel = DefaultListModel<Path>()
     private val installationList = JBList(installationListModel)
     private val defaultInstallationLabel = JBLabel()
+    private val skeletonTemplateField = JTextField()
     private var pendingDefaultPath: Path? = null
 
     private val registry: GhidraInstallationRegistryService
@@ -46,7 +49,36 @@ class GhidraInstallationsConfigurable : Configurable {
             BorderLayout.NORTH,
         )
 
-        panel.add(JBScrollPane(installationList), BorderLayout.CENTER)
+        val centerPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
+        centerPanel.add(JBScrollPane(installationList), BorderLayout.CENTER)
+
+        val skeletonTemplatePanel = JPanel(BorderLayout(JBUI.scale(6), 0))
+        skeletonTemplatePanel.add(
+            JBLabel("Skeleton template:"),
+            BorderLayout.WEST,
+        )
+        skeletonTemplatePanel.add(
+            skeletonTemplateField,
+            BorderLayout.CENTER,
+        )
+
+        val browseSkeletonButton = JButton("Browse...")
+        browseSkeletonButton.addActionListener {
+            val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+            descriptor.title = "Select Ghidra Skeleton Template Directory"
+
+            FileChooser.chooseFile(descriptor, null, null)?.let { selectedDirectory ->
+                skeletonTemplateField.text = selectedDirectory.path
+            }
+        }
+
+        skeletonTemplatePanel.add(
+            browseSkeletonButton,
+            BorderLayout.EAST,
+        )
+
+        centerPanel.add(skeletonTemplatePanel, BorderLayout.SOUTH)
+        panel.add(centerPanel, BorderLayout.CENTER)
 
         val addButton = JButton("Add...")
         addButton.addActionListener { addInstallation() }
@@ -80,7 +112,15 @@ class GhidraInstallationsConfigurable : Configurable {
         val currentDefault = registry.defaultConfiguredPath()?.toString()
         val pendingDefault = pendingDefaultPath?.toString()
 
-        return currentPaths != pendingPaths || currentDefault != pendingDefault
+        val currentSkeletonTemplate =
+            registry.skeletonTemplatePath()?.toString().orEmpty()
+
+        val pendingSkeletonTemplate =
+            skeletonTemplateField.text.trim()
+
+        return currentPaths != pendingPaths ||
+            currentDefault != pendingDefault ||
+            currentSkeletonTemplate != pendingSkeletonTemplate
     }
 
     @Throws(ConfigurationException::class)
@@ -88,14 +128,28 @@ class GhidraInstallationsConfigurable : Configurable {
         val configuredPaths = (0 until installationListModel.size)
             .map { installationListModel.getElementAt(it) }
 
+        val skeletonTemplatePath = skeletonTemplateField.text
+            .trim()
+            .takeIf(String::isNotEmpty)
+            ?.let(Path::of)
+
         try {
+            if (skeletonTemplatePath != null) {
+                GhidraSkeletonTemplateDiscovery.discover(skeletonTemplatePath)
+            }
+
             registry.replaceAll(configuredPaths, pendingDefaultPath)
+            registry.setSkeletonTemplatePath(skeletonTemplatePath)
         }
         catch (e: GhidraInstallationException) {
-            throw ConfigurationException(e.message ?: "Failed to register Ghidra installation.")
+            throw ConfigurationException(
+                e.message ?: "Failed to register Ghidra installation."
+            )
         }
-        catch (e: IllegalArgumentException) {
-            throw ConfigurationException(e.message ?: "Invalid Ghidra installation configuration.")
+        catch (e: Exception) {
+            throw ConfigurationException(
+                e.message ?: "Invalid Ghidra installation configuration."
+            )
         }
     }
 
@@ -104,6 +158,8 @@ class GhidraInstallationsConfigurable : Configurable {
 
         registry.configuredPaths().forEach(installationListModel::addElement)
         pendingDefaultPath = registry.defaultConfiguredPath()
+        skeletonTemplateField.text =
+            registry.skeletonTemplatePath()?.toString().orEmpty()
 
         updateDefaultInstallationLabel()
     }
@@ -149,8 +205,7 @@ class GhidraInstallationsConfigurable : Configurable {
         installationListModel.removeElement(selectedPath)
 
         if (pendingDefaultPath == selectedPath) {
-            pendingDefaultPath =
-                installationListModel.firstElementOrNull()
+            pendingDefaultPath = installationListModel.firstElementOrNull()
         }
 
         updateDefaultInstallationLabel()

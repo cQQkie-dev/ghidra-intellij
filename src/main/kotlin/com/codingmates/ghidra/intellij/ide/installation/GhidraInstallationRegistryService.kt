@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.installation
 
+import com.codingmates.ghidra.intellij.ide.extension.GhidraSkeletonTemplateDiscovery
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
@@ -66,6 +67,27 @@ class GhidraInstallationRegistryService :
     }
 
     /**
+     * Returns the configured official Ghidra Skeleton template path, if one exists.
+     */
+    fun skeletonTemplatePath(): Path? =
+        state.skeletonTemplatePath
+            .takeIf(String::isNotBlank)
+            ?.let(Path::of)
+
+    /**
+     * Sets or clears the optional official Ghidra Skeleton template path.
+     */
+    fun setSkeletonTemplatePath(configuredPath: Path?) {
+        if (configuredPath == null) {
+            state.skeletonTemplatePath = ""
+            return
+        }
+
+        val template = GhidraSkeletonTemplateDiscovery.discover(configuredPath)
+        state.skeletonTemplatePath = template.configuredPath.toString()
+    }
+
+    /**
      * Replaces all registered installations with [configuredPaths].
      *
      * Duplicate paths resolving to the same canonical installation are collapsed. If
@@ -102,8 +124,11 @@ class GhidraInstallationRegistryService :
             }
         }
 
+        val existingSkeletonTemplatePath = state.skeletonTemplatePath
+
         state = GhidraInstallationRegistryState().apply {
             this.defaultCanonicalPath = defaultCanonicalPath
+            this.skeletonTemplatePath = existingSkeletonTemplatePath
             installations = discoveredByCanonicalPath.values.map { installation ->
                 RegisteredGhidraInstallationState(
                     configuredPath = installation.configuredPath.toString(),
@@ -169,6 +194,7 @@ class GhidraInstallationRegistryService :
  */
 class GhidraInstallationRegistryState {
     var defaultCanonicalPath: String = ""
+    var skeletonTemplatePath: String = ""
     var installations: MutableList<RegisteredGhidraInstallationState> = mutableListOf()
 }
 
