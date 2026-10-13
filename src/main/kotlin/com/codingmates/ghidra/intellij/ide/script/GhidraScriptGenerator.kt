@@ -54,7 +54,9 @@ object GhidraScriptGenerator {
 
         return when (spec.language) {
             GhidraScriptLanguage.JAVA -> renderJava(spec)
-            GhidraScriptLanguage.PYTHON -> renderPython(spec)
+            GhidraScriptLanguage.PYGHIDRA,
+            GhidraScriptLanguage.JYTHON,
+            -> renderPython(spec)
         }
     }
 
@@ -91,19 +93,24 @@ object GhidraScriptGenerator {
         commentPrefix: String,
         spec: GhidraScriptSpec,
     ) {
-        spec.description
+        val description = spec.description.ifBlank {
+            "TODO write a description for this script"
+        }
+
+        description
             .lineSequence()
             .filter(String::isNotBlank)
             .forEach { line ->
                 builder.appendLine("$commentPrefix$line")
             }
 
-        if (spec.author.isNotBlank()) {
-            builder.appendLine("$commentPrefix@author ${spec.author}")
-        }
-
-        if (spec.category.isNotBlank()) {
-            builder.appendLine("$commentPrefix@category ${spec.category}")
-        }
+        builder.appendLine("$commentPrefix@author ${spec.author}")
+        builder.appendLine(
+            "$commentPrefix@category ${spec.category.ifBlank { "_NEW_" }}"
+        )
+        builder.appendLine("$commentPrefix@keybinding")
+        builder.appendLine("$commentPrefix@menupath")
+        builder.appendLine("$commentPrefix@toolbar")
+        builder.appendLine("$commentPrefix@runtime ${spec.language.runtimeName}")
     }
 }

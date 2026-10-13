@@ -19,7 +19,7 @@ class GhidraScriptGeneratorTest {
             GhidraScriptSpec(
                 name = "ExampleScript",
                 language = GhidraScriptLanguage.JAVA,
-                author = "mkoch",
+                author = "Example Author",
                 category = "Examples",
                 description = "Demonstrates Ghidra script generation.",
             ),
@@ -34,8 +34,12 @@ class GhidraScriptGeneratorTest {
         assertEquals(
             """
             //Demonstrates Ghidra script generation.
-            //@author mkoch
+            //@author Example Author
             //@category Examples
+            //@keybinding
+            //@menupath
+            //@toolbar
+            //@runtime Java
 
             import ghidra.app.script.GhidraScript;
 
@@ -59,8 +63,8 @@ class GhidraScriptGeneratorTest {
             scriptsDirectory,
             GhidraScriptSpec(
                 name = "ExampleScript",
-                language = GhidraScriptLanguage.PYTHON,
-                author = "mkoch",
+                language = GhidraScriptLanguage.PYGHIDRA,
+                author = "Example Author",
                 category = "Examples",
                 description = "Demonstrates Python script generation.",
             ),
@@ -74,8 +78,12 @@ class GhidraScriptGeneratorTest {
         assertEquals(
             """
             #Demonstrates Python script generation.
-            #@author mkoch
+            #@author Example Author
             #@category Examples
+            #@keybinding
+            #@menupath
+            #@toolbar
+            #@runtime PyGhidra
 
             # TODO: Add script code here
 
