@@ -10,3 +10,5 @@ exampleProject
 testData
 .DS_Store
 gradle-*.properties
+.kotlin/
+bin/
