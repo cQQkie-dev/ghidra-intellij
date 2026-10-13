@@ -9,6 +9,8 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 import javax.swing.JComponent
 import javax.swing.JTextField
 
@@ -24,6 +26,15 @@ class CreateGhidraScriptProjectDialog(
         title = "Create Ghidra Script Project"
         init()
         initValidation()
+
+        val validationListener = object : DocumentListener {
+            override fun insertUpdate(event: DocumentEvent) = revalidateDialog()
+            override fun removeUpdate(event: DocumentEvent) = revalidateDialog()
+            override fun changedUpdate(event: DocumentEvent) = revalidateDialog()
+        }
+
+        projectNameField.document.addDocumentListener(validationListener)
+        parentDirectoryField.document.addDocumentListener(validationListener)
     }
 
     fun projectSpec(ghidraInstallationPath: Path): GhidraScriptProjectSpec =
@@ -32,6 +43,10 @@ class CreateGhidraScriptProjectDialog(
             projectParentDirectory = Path.of(parentDirectoryField.text.trim()),
             ghidraInstallationPath = ghidraInstallationPath,
         )
+
+    private fun revalidateDialog() {
+        initValidation()
+    }
 
     override fun createCenterPanel(): JComponent = panel {
         row("Project name:") {

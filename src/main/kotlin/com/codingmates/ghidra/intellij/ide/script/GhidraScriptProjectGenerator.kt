@@ -112,12 +112,15 @@ object GhidraScriptProjectGenerator {
         def ghidraInstallDir =
             System.getenv("GHIDRA_INSTALL_DIR") ?:
             providers.gradleProperty("GHIDRA_INSTALL_DIR").orNull ?:
-            localGhidraProperties.getProperty("GHIDRA_INSTALL_DIR") ?:
+            localGhidraProperties.getProperty("GHIDRA_INSTALL_DIR")
+
+        if (!ghidraInstallDir) {
             throw new GradleException(
                 "GHIDRA_INSTALL_DIR is not defined. " +
                 "Set it as an environment variable, pass " +
                 "-PGHIDRA_INSTALL_DIR=<path>, or configure the IntelliJ Ghidra plugin."
             )
+        }
 
         apply from: new File(ghidraInstallDir).getCanonicalPath() +
             "/support/buildExtension.gradle"
