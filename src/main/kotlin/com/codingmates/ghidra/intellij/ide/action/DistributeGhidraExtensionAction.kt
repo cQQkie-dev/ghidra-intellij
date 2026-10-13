@@ -2,14 +2,12 @@ package com.codingmates.ghidra.intellij.ide.action
 
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArtifactFinder
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
-import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommand
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandBuilder
+import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandRunner
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -91,9 +89,7 @@ class DistributeGhidraExtensionAction : DumbAwareAction(
                     indicator.isIndeterminate = true
 
                     try {
-                        val output = CapturingProcessHandler(
-                            createCommandLine(command)
-                        ).runProcess()
+                        val output = GhidraGradleCommandRunner.run(command)
 
                         if (output.exitCode == 0) {
                             val artifact = GhidraExtensionArtifactFinder.findNewest(projectRoot)
@@ -140,19 +136,6 @@ class DistributeGhidraExtensionAction : DumbAwareAction(
                 }
             }
         )
-    }
-
-    private fun createCommandLine(command: GhidraGradleCommand): GeneralCommandLine {
-        val commandLine = if (System.getProperty("os.name").startsWith("Windows", true)) {
-            GeneralCommandLine("cmd.exe", "/c", command.executable)
-        }
-        else {
-            GeneralCommandLine(command.executable)
-        }
-
-        return commandLine
-            .withParameters(command.arguments)
-            .withWorkDirectory(command.workingDirectory.toFile())
     }
 
     private fun notify(
