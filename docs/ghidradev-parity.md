@@ -47,6 +47,33 @@
 | C/C++ symbol lookup | Yes, Eclipse CDT | Deferred | Later |
 | Processor/SLEIGH support | Yes | Planned | Later |
 
+
+## Validated extension debug workflow
+
+Ghidra 12.1.4 PUBLIC was launched successfully through the custom IntelliJ
+`Ghidra Launcher` Run Configuration in Debug mode.
+
+A generated Plugin extension project was loaded directly from the IntelliJ project
+classpath. The plugin was discovered in the CodeBrowser tool configuration under
+`Examples`, where it could be enabled without packaging or installing an extension ZIP.
+
+The following debugger workflow was validated:
+
+```text
+IntelliJ Debug
+-> Ghidra Launcher starts Ghidra
+-> CodeBrowser Configure Tool discovers the project plugin
+-> enabling the plugin stops at IntelliJ constructor and init() breakpoints
+-> provider and toolbar action become available in Ghidra
+-> action callback stops at IntelliJ breakpoints
+-> Resume Program continues the Ghidra UI thread
+```
+
+Development-classpath extensions do not appear in Ghidra's Extension Manager because
+they are not installed under the user `Extensions/` directory. The Extension Manager
+is used only for packaged and installed extension ZIPs.
+
+
 ## Existing IntelliJ foundation
 
 The upstream `intellij-ghidra` code currently provides:
