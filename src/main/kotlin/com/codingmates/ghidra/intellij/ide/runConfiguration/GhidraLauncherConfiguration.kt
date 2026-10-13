@@ -92,7 +92,8 @@ class GhidraLauncherConfiguration(
     override fun getWorkingDirectory(): String? = state.workingDirectory
 
     override fun isAlternativeJrePathEnabled(): Boolean {
-        return state.alternativeJrePathEnabled
+        return state.alternativeJrePathEnabled &&
+            !state.alternativeJrePath.isNullOrBlank()
     }
 
     override fun isPassParentEnvs(): Boolean {
@@ -115,6 +116,11 @@ class GhidraLauncherConfiguration(
         val javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.instance
         javaRunConfigurationExtensionManager.readExternal(this, element)
         XmlSerializer.deserializeInto(state, element)
+
+        if (state.alternativeJrePath.isNullOrBlank()) {
+            state.alternativeJrePath = null
+            state.alternativeJrePathEnabled = false
+        }
 
         EnvironmentVariablesComponent.readExternal(element, envs)
         backingRunConfigurationModule.readExternal(element)
@@ -180,8 +186,8 @@ class GhidraLauncherConfiguration(
     private var state = GhidraLauncherConfigurationBean()
 
     private data class GhidraLauncherConfigurationBean(
-        var alternativeJrePath: String? = "",
-        var alternativeJrePathEnabled: Boolean = true,
+        var alternativeJrePath: String? = null,
+        var alternativeJrePathEnabled: Boolean = false,
         var passParentEnvironments: Boolean = true,
         var shortenCommandLine: ShortenCommandLine? = null,
         var vmParameters: String = "",

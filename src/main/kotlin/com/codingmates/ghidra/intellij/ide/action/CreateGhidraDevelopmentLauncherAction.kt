@@ -1,6 +1,7 @@
 package com.codingmates.ghidra.intellij.ide.action
 
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
 import com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherConfiguration
@@ -17,7 +18,7 @@ import java.nio.file.Path
 class CreateGhidraDevelopmentLauncherAction : DumbAwareAction(
     "Create Ghidra Development Launcher",
     "Create a Ghidra Launcher Run Configuration for the current project",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     override fun getActionUpdateThread(): ActionUpdateThread =
@@ -89,6 +90,8 @@ class CreateGhidraDevelopmentLauncherAction : DumbAwareAction(
         val configuration =
             settings.configuration as GhidraLauncherConfiguration
 
+        configuration.setAlternativeJrePath(null)
+        configuration.setAlternativeJrePathEnabled(false)
         configuration.setWorkingDirectory(projectRoot.toString())
         configuration.setHeadless(false)
         configuration.setArgs("")
