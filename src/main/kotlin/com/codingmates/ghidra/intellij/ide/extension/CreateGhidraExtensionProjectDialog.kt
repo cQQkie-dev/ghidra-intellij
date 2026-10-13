@@ -27,11 +27,19 @@ class CreateGhidraExtensionProjectDialog(
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
     private val pluginTemplateCheckbox = JCheckBox("Plugin - extends the Ghidra user interface")
     private val analyzerTemplateCheckbox = JCheckBox("Analyzer - extends Ghidra analysis")
+    private val loaderTemplateCheckbox = JCheckBox("Loader - imports a binary file format")
+    private val fileSystemTemplateCheckbox = JCheckBox(
+        "File System - opens a file system format for browsing or batch import"
+    )
+    private val exporterTemplateCheckbox = JCheckBox("Exporter - exports a Ghidra program")
 
     private val templatesPanel = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         add(pluginTemplateCheckbox)
         add(analyzerTemplateCheckbox)
+        add(loaderTemplateCheckbox)
+        add(fileSystemTemplateCheckbox)
+        add(exporterTemplateCheckbox)
     }
 
     init {
@@ -69,6 +77,18 @@ class CreateGhidraExtensionProjectDialog(
 
             if (analyzerTemplateCheckbox.isSelected) {
                 add(GhidraExtensionTemplate.ANALYZER)
+            }
+
+            if (loaderTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.LOADER)
+            }
+
+            if (fileSystemTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.FILE_SYSTEM)
+            }
+
+            if (exporterTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.EXPORTER)
             }
         }
 

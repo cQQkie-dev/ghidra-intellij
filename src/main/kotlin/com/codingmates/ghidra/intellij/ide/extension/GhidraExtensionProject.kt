@@ -19,6 +19,24 @@ enum class GhidraExtensionTemplate(
         skeletonFileName = "SkeletonAnalyzer.java",
         skeletonClassName = "SkeletonAnalyzer",
         generatedClassSuffix = "Analyzer",
+    ),
+    LOADER(
+        displayName = "Loader",
+        skeletonFileName = "SkeletonLoader.java",
+        skeletonClassName = "SkeletonLoader",
+        generatedClassSuffix = "Loader",
+    ),
+    FILE_SYSTEM(
+        displayName = "File System",
+        skeletonFileName = "SkeletonFileSystem.java",
+        skeletonClassName = "SkeletonFileSystem",
+        generatedClassSuffix = "FileSystem",
+    ),
+    EXPORTER(
+        displayName = "Exporter",
+        skeletonFileName = "SkeletonExporter.java",
+        skeletonClassName = "SkeletonExporter",
+        generatedClassSuffix = "Exporter",
     );
 
     override fun toString(): String = displayName

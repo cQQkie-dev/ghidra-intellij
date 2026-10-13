@@ -75,6 +75,9 @@ class GhidraExtensionProjectGeneratorTest {
                 templates = setOf(
                     GhidraExtensionTemplate.PLUGIN,
                     GhidraExtensionTemplate.ANALYZER,
+                    GhidraExtensionTemplate.LOADER,
+                    GhidraExtensionTemplate.FILE_SYSTEM,
+                    GhidraExtensionTemplate.EXPORTER,
                 ),
             )
         )
@@ -88,8 +91,20 @@ class GhidraExtensionProjectGeneratorTest {
         val analyzerSource = sourceDirectory
             .resolve("ExampleExtensionAnalyzer.java")
 
+        val loaderSource = sourceDirectory
+            .resolve("ExampleExtensionLoader.java")
+
+        val fileSystemSource = sourceDirectory
+            .resolve("ExampleExtensionFileSystem.java")
+
+        val exporterSource = sourceDirectory
+            .resolve("ExampleExtensionExporter.java")
+
         assertTrue(pluginSource.exists())
         assertTrue(analyzerSource.exists())
+        assertTrue(loaderSource.exists())
+        assertTrue(fileSystemSource.exists())
+        assertTrue(exporterSource.exists())
 
         assertTrue(
             pluginSource.readText().contains(
@@ -111,6 +126,22 @@ class GhidraExtensionProjectGeneratorTest {
                 "class ExampleExtensionAnalyzer"
             )
         )
+
+        assertTrue(
+            loaderSource.readText().contains(
+                "class ExampleExtensionLoader"
+            )
+        )
+        assertTrue(
+            fileSystemSource.readText().contains(
+                "class ExampleExtensionFileSystem"
+            )
+        )
+        assertTrue(
+            exporterSource.readText().contains(
+                "class ExampleExtensionExporter"
+            )
+        )        
     }
 
     @Test
@@ -189,6 +220,36 @@ class GhidraExtensionProjectGeneratorTest {
                 package skeleton;
 
                 public class SkeletonAnalyzer {
+                }
+                """.trimIndent() + "\n"
+            )
+
+        skeletonDirectory.resolve("src/main/java/skeleton/SkeletonLoader.java")
+            .writeText(
+                """
+                package skeleton;
+
+                public class SkeletonLoader {
+                }
+                """.trimIndent() + "\n"
+            )
+
+        skeletonDirectory.resolve("src/main/java/skeleton/SkeletonFileSystem.java")
+            .writeText(
+                """
+                package skeleton;
+
+                public class SkeletonFileSystem {
+                }
+                """.trimIndent() + "\n"
+            )
+
+        skeletonDirectory.resolve("src/main/java/skeleton/SkeletonExporter.java")
+            .writeText(
+                """
+                package skeleton;
+
+                public class SkeletonExporter {
                 }
                 """.trimIndent() + "\n"
             )
