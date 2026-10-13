@@ -48,6 +48,12 @@ object GhidraExtensionProjectGenerator {
                 projectDirectory = projectDirectory,
             )
 
+            copySelectedJavaTemplates(
+                skeleton = skeleton,
+                projectDirectory = projectDirectory,
+                spec = spec,
+            )
+
             val buildFile = projectDirectory.resolve("build.gradle")
             val settingsFile = projectDirectory.resolve("settings.gradle")
             val localGradlePropertiesFile =
@@ -158,10 +164,79 @@ object GhidraExtensionProjectGenerator {
         }
     }
 
+    @Throws(
+        IOException::class,
+        GhidraExtensionProjectGenerationException::class,
+    )
+    private fun copySelectedJavaTemplates(
+        skeleton: GhidraSkeletonTemplate,
+        projectDirectory: Path,
+        spec: GhidraExtensionProjectSpec,
+    ) {
+        if (spec.templates.isEmpty()) {
+            return
+        }
+
+        val packageName = extensionPackageName(spec.name)
+        val classBaseName = extensionClassBaseName(spec.name)
+        val destinationDirectory = projectDirectory
+            .resolve("src/main/java")
+            .resolve(packageName)
+
+        Files.createDirectories(destinationDirectory)
+
+        spec.templates.forEach { template ->
+            val sourceFile = skeleton.javaTemplateDirectory
+                .resolve(template.skeletonFileName)
+
+            if (!Files.isRegularFile(sourceFile)) {
+                throw GhidraExtensionProjectGenerationException(
+                    "Ghidra Skeleton template is missing Java source: $sourceFile"
+                )
+            }
+
+            val generatedClassName =
+                classBaseName + template.generatedClassSuffix
+
+            val source = Files.readString(sourceFile, StandardCharsets.UTF_8)
+
+            val generatedSource = source
+                .replace(
+                    "package skeleton;",
+                    "package $packageName;",
+                )
+                .replace(
+                    template.skeletonClassName,
+                    generatedClassName,
+                )
+
+            Files.writeString(
+                destinationDirectory.resolve("$generatedClassName.java"),
+                generatedSource,
+                StandardCharsets.UTF_8,
+            )
+        }
+    }
+
+    private fun extensionPackageName(projectName: String): String =
+        projectName.lowercase().replace('-', '_')
+
+    private fun extensionClassBaseName(projectName: String): String =
+        projectName
+            .split('-', '_')
+            .filter(String::isNotEmpty)
+            .joinToString("") { component ->
+                component.replaceFirstChar { character ->
+                    character.uppercase()
+                }
+            }
+
     private fun shouldExcludeFromEmptyExtension(
         relativePath: String,
     ): Boolean =
-        relativePath == "build.gradle" ||
+            relativePath == "build.gradle" ||
+            relativePath == "src/main/help" ||
+            relativePath.startsWith("src/main/help/") ||
             relativePath == "buildTemplate.gradle" ||
             relativePath == "gitignore" ||
             relativePath == "src/main/java/skeleton" ||

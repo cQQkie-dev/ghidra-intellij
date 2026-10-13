@@ -62,6 +62,58 @@ class GhidraExtensionProjectGeneratorTest {
     }
 
     @Test
+    fun `creates selected Plugin and Analyzer templates`() {
+        val parentDirectory = Files.createTempDirectory("ghidra-extension-projects")
+        val skeletonDirectory = createSkeletonTemplate()
+
+        val generated = GhidraExtensionProjectGenerator.create(
+            GhidraExtensionProjectSpec(
+                name = "ExampleExtension",
+                projectParentDirectory = parentDirectory,
+                skeletonTemplatePath = skeletonDirectory,
+                ghidraInstallationPath = Path.of("/example/ghidra"),
+                templates = setOf(
+                    GhidraExtensionTemplate.PLUGIN,
+                    GhidraExtensionTemplate.ANALYZER,
+                ),
+            )
+        )
+
+        val sourceDirectory = generated.projectDirectory
+            .resolve("src/main/java/exampleextension")
+
+        val pluginSource = sourceDirectory
+            .resolve("ExampleExtensionPlugin.java")
+
+        val analyzerSource = sourceDirectory
+            .resolve("ExampleExtensionAnalyzer.java")
+
+        assertTrue(pluginSource.exists())
+        assertTrue(analyzerSource.exists())
+
+        assertTrue(
+            pluginSource.readText().contains(
+                "package exampleextension;"
+            )
+        )
+        assertTrue(
+            pluginSource.readText().contains(
+                "class ExampleExtensionPlugin"
+            )
+        )
+        assertTrue(
+            analyzerSource.readText().contains(
+                "package exampleextension;"
+            )
+        )
+        assertTrue(
+            analyzerSource.readText().contains(
+                "class ExampleExtensionAnalyzer"
+            )
+        )
+    }
+
+    @Test
     fun `rejects invalid extension project name`() {
         val exception =
             assertFailsWith<GhidraExtensionProjectGenerationException> {
@@ -120,8 +172,26 @@ class GhidraExtensionProjectGeneratorTest {
         skeletonDirectory.resolve("ghidra_scripts/README.txt").writeText("Scripts\n")
 
         skeletonDirectory.resolve("src/main/java/skeleton").createDirectories()
+
         skeletonDirectory.resolve("src/main/java/skeleton/SkeletonPlugin.java")
-            .writeText("package skeleton;\n")
+            .writeText(
+                """
+                package skeleton;
+
+                public class SkeletonPlugin {
+                }
+                """.trimIndent() + "\n"
+            )
+
+        skeletonDirectory.resolve("src/main/java/skeleton/SkeletonAnalyzer.java")
+            .writeText(
+                """
+                package skeleton;
+
+                public class SkeletonAnalyzer {
+                }
+                """.trimIndent() + "\n"
+            )
 
         skeletonDirectory.resolve("data/languages").createDirectories()
         skeletonDirectory.resolve("data/languages/skel.slaspec").writeText("language\n")
