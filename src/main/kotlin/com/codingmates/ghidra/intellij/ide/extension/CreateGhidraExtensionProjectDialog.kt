@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.extension
 
+import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionTemplate
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
@@ -10,6 +11,7 @@ import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.JComponent
+import javax.swing.JCheckBox
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -21,6 +23,8 @@ class CreateGhidraExtensionProjectDialog(
 
     private val projectNameField = JTextField()
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
+    private val pluginTemplateCheckbox = JCheckBox("Plugin — extends the Ghidra user interface")
+    private val analyzerTemplateCheckbox = JCheckBox("Analyzer — extends Ghidra analysis")
 
     init {
         title = "Create Ghidra Extension Project"
@@ -46,7 +50,19 @@ class CreateGhidraExtensionProjectDialog(
             projectParentDirectory = Path.of(parentDirectoryField.text.trim()),
             skeletonTemplatePath = skeletonTemplatePath,
             ghidraInstallationPath = ghidraInstallationPath,
+            templates = selectedTemplates(),
         )
+
+    private fun selectedTemplates(): Set<GhidraExtensionTemplate> =
+        buildSet {
+            if (pluginTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.PLUGIN)
+            }
+
+            if (analyzerTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.ANALYZER)
+            }
+        }
 
     private fun revalidateDialog() {
         initValidation()
@@ -72,6 +88,16 @@ class CreateGhidraExtensionProjectDialog(
                     parentDirectoryField.text = selectedDirectory.path
                 }
             }
+        }
+
+        row("Templates:") {
+            cell(pluginTemplateCheckbox)
+                .align(AlignX.FILL)
+        }
+
+        row {
+            cell(analyzerTemplateCheckbox)
+                .align(AlignX.FILL)
         }
     }
 
