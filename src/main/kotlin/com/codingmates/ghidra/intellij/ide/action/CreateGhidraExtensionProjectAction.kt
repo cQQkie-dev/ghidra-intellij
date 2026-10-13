@@ -3,6 +3,7 @@ package com.codingmates.ghidra.intellij.ide.action
 import com.codingmates.ghidra.intellij.ide.extension.CreateGhidraExtensionProjectDialog
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionProjectGenerationException
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionProjectGenerator
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -17,7 +18,7 @@ import java.nio.file.Path
 class CreateGhidraExtensionProjectAction : DumbAwareAction(
     "New Ghidra Extension Project",
     "Create a Gradle-backed Ghidra extension project",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     private val installationRegistry: GhidraInstallationRegistryService

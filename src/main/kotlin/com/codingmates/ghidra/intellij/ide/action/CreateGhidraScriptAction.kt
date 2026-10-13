@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.action
 
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
 import com.codingmates.ghidra.intellij.ide.script.CreateGhidraScriptDialog
@@ -17,7 +18,7 @@ import java.nio.file.Path
 class CreateGhidraScriptAction : DumbAwareAction(
     "New Ghidra Script",
     "Create a new Java or Python Ghidra script",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

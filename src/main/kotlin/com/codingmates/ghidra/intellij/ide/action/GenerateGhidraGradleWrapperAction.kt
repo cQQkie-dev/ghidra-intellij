@@ -2,6 +2,7 @@ package com.codingmates.ghidra.intellij.ide.action
 
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommand
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandBuilder
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
@@ -24,7 +25,7 @@ import java.nio.file.Path
 class GenerateGhidraGradleWrapperAction : DumbAwareAction(
     "Generate Ghidra Gradle Wrapper",
     "Generate a Gradle Wrapper for the current Ghidra project",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     private val installationRegistry: GhidraInstallationRegistryService

@@ -4,6 +4,7 @@ import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArtifactFind
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionInstallationException
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionInstaller
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationDiscovery
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationException
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
@@ -24,7 +25,7 @@ import java.nio.file.Path
 class InstallGhidraExtensionAction : DumbAwareAction(
     "Install Latest Ghidra Extension",
     "Install the newest built Ghidra extension archive",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

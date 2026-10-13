@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.action
 
+import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.script.CreateGhidraScriptProjectDialog
 import com.codingmates.ghidra.intellij.ide.script.GhidraScriptProjectGenerationException
@@ -17,7 +18,7 @@ import java.nio.file.Path
 class CreateGhidraScriptProjectAction : DumbAwareAction(
     "New Ghidra Script Project",
     "Create a Gradle-backed Ghidra script project",
-    null,
+    GhidraIcons.Ghidra,
 ) {
 
     private val installationRegistry: GhidraInstallationRegistryService
