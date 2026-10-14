@@ -12,7 +12,7 @@ data class GeneratedGhidraScriptProject(
     val projectDirectory: Path,
     val buildFile: Path,
     val settingsFile: Path,
-    val localGhidraPropertiesFile: Path,
+    val localGradlePropertiesFile: Path,
     val scriptDirectory: Path,
 )
 

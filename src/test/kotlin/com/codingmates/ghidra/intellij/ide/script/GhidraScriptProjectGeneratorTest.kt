@@ -30,10 +30,10 @@ class GhidraScriptProjectGeneratorTest {
         assertTrue(generated.buildFile.exists())
         assertTrue(generated.settingsFile.exists())
         assertTrue(generated.scriptDirectory.exists())
-        assertTrue(generated.localGhidraPropertiesFile.exists())
+        assertTrue(generated.localGradlePropertiesFile.exists())
         assertEquals(
             "GHIDRA_INSTALL_DIR=/example/ghidra\n",
-            generated.localGhidraPropertiesFile.readText(),
+            generated.localGradlePropertiesFile.readText(),
         )
 
         assertTrue(
@@ -53,7 +53,7 @@ class GhidraScriptProjectGeneratorTest {
         )
         assertTrue(
             generated.projectDirectory.resolve(".gitignore").readText().contains(
-                "ghidra-intellij.properties"
+                "gradle.properties"
             )
         )
         assertEquals(

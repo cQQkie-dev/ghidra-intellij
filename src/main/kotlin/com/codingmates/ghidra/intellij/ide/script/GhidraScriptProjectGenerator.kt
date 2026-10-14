@@ -32,7 +32,7 @@ object GhidraScriptProjectGenerator {
             val buildFile = projectDirectory.resolve("build.gradle")
             val settingsFile = projectDirectory.resolve("settings.gradle")
             val gitIgnoreFile = projectDirectory.resolve(".gitignore")
-            val localGhidraPropertiesFile = projectDirectory.resolve("ghidra-intellij.properties")
+            val localGradlePropertiesFile = projectDirectory.resolve("gradle.properties")
             val scriptDirectory = projectDirectory.resolve("ghidra_scripts")
 
             Files.writeString(
@@ -54,7 +54,7 @@ object GhidraScriptProjectGenerator {
             )
 
             Files.writeString(
-                localGhidraPropertiesFile,
+                localGradlePropertiesFile,
                 "GHIDRA_INSTALL_DIR=${spec.ghidraInstallationPath.toAbsolutePath().normalize()}\n",
                 StandardCharsets.UTF_8,
             )
@@ -65,7 +65,7 @@ object GhidraScriptProjectGenerator {
                 projectDirectory = projectDirectory,
                 buildFile = buildFile,
                 settingsFile = settingsFile,
-                localGhidraPropertiesFile = localGhidraPropertiesFile,
+                localGradlePropertiesFile = localGradlePropertiesFile,
                 scriptDirectory = scriptDirectory,
             )
         }
@@ -92,13 +92,16 @@ object GhidraScriptProjectGenerator {
         //
         // Set GHIDRA_INSTALL_DIR through one of these mechanisms:
         //
+        //   gradle.properties:
+        //   GHIDRA_INSTALL_DIR=/path/to/ghidra
+        //
         //   ./gradlew -PGHIDRA_INSTALL_DIR=/path/to/ghidra classes
         //
         // or:
         //
         //   GHIDRA_INSTALL_DIR=/path/to/ghidra ./gradlew classes
         //
-        // The IntelliJ Ghidra plugin supplies this property automatically for supported actions.
+        // The generated gradle.properties file is local machine configuration and is Git-ignored.
 
         def localGhidraProperties = new Properties()
         def localGhidraPropertiesFile = file("ghidra-intellij.properties")
@@ -140,6 +143,6 @@ object GhidraScriptProjectGenerator {
         build/
         .idea/
         *.iml
-        ghidra-intellij.properties
+        gradle.properties
         """.trimIndent() + "\n"
 }
