@@ -35,6 +35,7 @@
 | Ghidra API classpath, sources, Javadocs | Yes | Yes | Complete |
 | Link existing project to Ghidra | Yes | Facet configuration | Complete |
 | Ghidra Script Project | Yes | Yes | Complete |
+| Shared user script directory | Yes | Optional `$HOME/ghidra_scripts` root for generated Script Projects | Complete |
 | New Java Ghidra Script | Yes | Yes | Complete |
 | New Python Ghidra Script | Yes | PyGhidra and Jython templates | Complete |
 | Ghidra Module/Extension Project | Yes | Yes | Complete |
@@ -72,7 +73,16 @@ Tools -> New Ghidra Extension Project
 -> Ghidra starts under IntelliJ debugger
 ```
 
-Generated Script Projects follow the same Wrapper, Open Project, Gradle import, and automatic facet setup workflow. They do not automatically receive a development launcher.
+Generated Script Projects follow the same Wrapper, Open Project, Gradle import, and automatic
+facet setup workflow. They do not automatically receive a development launcher.
+
+Script Projects use a project-local `ghidra_scripts/` directory by default. The creation dialog
+can instead select the shared user script directory:
+
+```text
+$HOME/ghidra_scripts
+```
+The selected shared root is stored only in ignored local `gradle.properties` as `GHIDRA_SCRIPT_DIR`. New Ghidra Script defaults to the selected root, and scripts in the shared directory are immediately visible to Ghidra Script Manager.
 
 For generated Processor/SLEIGH projects:
 ```text
