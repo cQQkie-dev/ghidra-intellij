@@ -93,9 +93,9 @@ object GhidraExtensionProjectGenerator {
             )
 
             if (GhidraExtensionTemplate.PROCESSOR in spec.templates) {
-                antPropertiesFile.writeText(
-                    antPropertiesTemplate(spec.ghidraInstallationPath),
-                    StandardCharsets.UTF_8,
+                GhidraSleighBuildSupport.writeAntProperties(
+                    projectRoot = projectDirectory,
+                    ghidraInstallationPath = spec.ghidraInstallationPath,
                 )
             }
 
@@ -237,26 +237,6 @@ object GhidraExtensionProjectGenerator {
                 StandardCharsets.UTF_8,
             )
         }
-    }
-
-    private fun antPropertiesTemplate(
-        ghidraInstallationPath: Path,
-    ): String {
-        val installationPath = ghidraInstallationPath
-            .toAbsolutePath()
-            .normalize()
-            .toString()
-            .replace("&", "&amp;")
-            .replace("\"", "&quot;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-
-        return """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <project>
-              <property name="ghidra.install.dir" value="$installationPath" />
-            </project>
-            """.trimIndent() + "\n"
     }
 
     private fun extensionPackageName(projectName: String): String =

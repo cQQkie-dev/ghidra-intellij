@@ -57,6 +57,13 @@
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
         <action
+                id="com.codingmates.ghidra.intellij.BuildGhidraSleighLanguage"
+                class="com.codingmates.ghidra.intellij.ide.action.BuildGhidraSleighLanguageAction"
+                text="Build SLEIGH Language"
+                description="Compile the current Ghidra Processor/SLEIGH language definition">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+        <action
                 id="com.codingmates.ghidra.intellij.DistributeGhidraExtension"
                 class="com.codingmates.ghidra.intellij.ide.action.DistributeGhidraExtensionAction"
                 text="Distribute Ghidra Extension"
