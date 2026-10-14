@@ -38,7 +38,7 @@
 | New Java Ghidra Script | Yes | Yes | Complete |
 | New Python Ghidra Script | Yes | PyGhidra and Jython templates | Complete |
 | Ghidra Module/Extension Project | Yes | Yes | Complete |
-| Official Skeleton templates | Yes | Empty, Plugin, Analyzer, Loader, File System, Exporter, Processor/SLEIGH | Complete |
+| Official Skeleton templates | Yes | Empty, Plugin, Analyzer, Loader, File System, Exporter, Processor/SLEIGH | Complete; Plugin, Loader, File System, Exporter, and Processor workflows runtime-validated |
 | Automatic Gradle Wrapper generation | No | Yes, when configured Gradle is available | Complete |
 | Open/import generated Gradle project | No | Notification action opens in a new IntelliJ window | Complete |
 | Automatic generated-project facet setup | No | Full facet with classes, sources, Javadocs, and selected runtime | Complete |
@@ -107,6 +107,21 @@ Development-classpath extensions do not appear in Ghidra's Extension Manager bec
 they are not installed under the user `Extensions/` directory. The Extension Manager
 is used only for packaged and installed extension ZIPs.
 
+## Validated extension template workflows
+
+The following official Skeleton template workflows have been validated against Ghidra 12.1.4 PUBLIC
+through direct IntelliJ classpath debugging:
+
+| Template | Validated behavior |
+|---|---|
+| Plugin | Ghidra CodeBrowser discovers the plugin; constructor, `init()`, and action breakpoints hit; generated provider and toolbar action work |
+| Loader | Loader recognition and `load()` breakpoints hit; Ghidra offers the custom loader and imports a matching test file |
+| File System | Probe, factory creation, mount, file listing, and byte-provider breakpoints hit; a mounted test file system exposes and imports a payload file |
+| Exporter | Ghidra offers the custom exporter; domain-object capability and export breakpoints hit; exporter writes the selected output file |
+| Processor/SLEIGH | Official Ant build compiles the Skeleton `.slaspec` to `.sla`; generated extension ZIP includes the `.sla`; Ghidra recognizes the installed extension |
+
+The Loader, File System, and Exporter Skeletons intentionally require developers to implement their
+format-specific recognition and processing logic before they provide useful behavior.
 
 ## Upstream foundation and current implementation
 
