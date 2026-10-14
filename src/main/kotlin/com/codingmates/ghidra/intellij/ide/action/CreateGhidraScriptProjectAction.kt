@@ -2,6 +2,7 @@ package com.codingmates.ghidra.intellij.ide.action
 
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandBuilder
 import com.codingmates.ghidra.intellij.ide.gradle.GhidraGradleCommandRunner
+import com.codingmates.ghidra.intellij.ide.facet.GhidraGeneratedProjectFacetSetup
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.script.CreateGhidraScriptProjectDialog
@@ -192,11 +193,17 @@ class CreateGhidraScriptProjectAction : DumbAwareAction(
 
         notification.addAction(
             NotificationAction.createSimple("Open Project") {
-                ProjectUtil.openOrImport(
+                val openedProject = ProjectUtil.openOrImport(
                     projectDirectory,
                     null,
                     true,
                 )
+
+                if (openedProject != null) {
+                    GhidraGeneratedProjectFacetSetup.configureAfterGradleImport(
+                        openedProject
+                    )
+                }
             }
         )
 
