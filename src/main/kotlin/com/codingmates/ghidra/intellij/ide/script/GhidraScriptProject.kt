@@ -6,6 +6,7 @@ data class GhidraScriptProjectSpec(
     val name: String,
     val projectParentDirectory: Path,
     val ghidraInstallationPath: Path,
+    val sharedScriptDirectory: Path? = null,
 )
 
 data class GeneratedGhidraScriptProject(

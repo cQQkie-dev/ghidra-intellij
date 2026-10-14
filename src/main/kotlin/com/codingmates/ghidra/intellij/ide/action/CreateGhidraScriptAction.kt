@@ -3,6 +3,7 @@ package com.codingmates.ghidra.intellij.ide.action
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
+import com.codingmates.ghidra.intellij.ide.project.GhidraProjectInstallationDiscovery
 import com.codingmates.ghidra.intellij.ide.script.CreateGhidraScriptDialog
 import com.codingmates.ghidra.intellij.ide.script.GhidraScriptGenerationException
 import com.codingmates.ghidra.intellij.ide.script.GhidraScriptGenerator
@@ -40,7 +41,9 @@ class CreateGhidraScriptAction : DumbAwareAction(
         val project = event.getData(CommonDataKeys.PROJECT) ?: return
         val projectRoot = project.basePath?.let(Path::of) ?: return
 
-        val scriptDirectory = projectRoot.resolve("ghidra_scripts")
+        val scriptDirectory =
+            GhidraProjectInstallationDiscovery.discoverScriptDirectory(projectRoot)
+                ?: projectRoot.resolve("ghidra_scripts")
         val dialog = CreateGhidraScriptDialog(project, scriptDirectory)
 
         if (!dialog.showAndGet()) {

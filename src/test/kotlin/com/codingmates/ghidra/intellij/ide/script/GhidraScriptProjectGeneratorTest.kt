@@ -7,6 +7,7 @@ import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GhidraScriptProjectGeneratorTest {
@@ -43,7 +44,12 @@ class GhidraScriptProjectGeneratorTest {
         )
         assertTrue(
             generated.buildFile.readText().contains(
-                """srcDir "ghidra_scripts""""
+                """providers.gradleProperty("GHIDRA_SCRIPT_DIR").orNull"""
+            )
+        )
+        assertTrue(
+            generated.buildFile.readText().contains(
+                """srcDir scriptDirectory"""
             )
         )
         assertTrue(
@@ -59,6 +65,50 @@ class GhidraScriptProjectGeneratorTest {
         assertEquals(
             """rootProject.name = "ExampleScripts"""" + "\n",
             generated.settingsFile.readText(),
+        )
+    }
+
+    @Test
+    fun `creates script project using shared user script directory`() {
+        val parentDirectory = Files.createTempDirectory("ghidra-script-projects")
+        val sharedScriptDirectory =
+            parentDirectory.resolve("shared-ghidra-scripts")
+
+        val generated = GhidraScriptProjectGenerator.create(
+            GhidraScriptProjectSpec(
+                name = "SharedScripts",
+                projectParentDirectory = parentDirectory,
+                ghidraInstallationPath = Path.of("/example/ghidra"),
+                sharedScriptDirectory = sharedScriptDirectory,
+            )
+        )
+
+        assertEquals(
+            sharedScriptDirectory.toAbsolutePath().normalize(),
+            generated.scriptDirectory,
+        )
+        assertTrue(generated.scriptDirectory.exists())
+        assertFalse(
+            generated.projectDirectory.resolve("ghidra_scripts").exists()
+        )
+
+        assertEquals(
+            """
+            GHIDRA_INSTALL_DIR=/example/ghidra
+            GHIDRA_SCRIPT_DIR=${sharedScriptDirectory.toAbsolutePath().normalize()}
+            """.trimIndent() + "\n",
+            generated.localGradlePropertiesFile.readText(),
+        )
+
+        assertTrue(
+            generated.buildFile.readText().contains(
+                """providers.gradleProperty("GHIDRA_SCRIPT_DIR").orNull"""
+            )
+        )
+        assertTrue(
+            generated.buildFile.readText().contains(
+                "srcDir scriptDirectory"
+            )
         )
     }
 

@@ -59,12 +59,46 @@ class GhidraProjectInstallationDiscoveryTest {
     }
 
     @Test
+    fun `reads shared script directory from Gradle properties`() {
+        val projectDirectory =
+            Files.createTempDirectory("ghidra-project-installation")
+
+        projectDirectory.resolve("gradle.properties").writeText(
+            "GHIDRA_INSTALL_DIR=/example/ghidra\n" +
+                "GHIDRA_SCRIPT_DIR=/example/ghidra_scripts\n"
+        )
+
+        assertEquals(
+            Path.of("/example/ghidra_scripts"),
+            GhidraProjectInstallationDiscovery.discoverScriptDirectory(
+                projectDirectory
+            ),
+        )
+    }
+
+    @Test
     fun `returns null when no local Ghidra installation is configured`() {
         val projectDirectory =
             Files.createTempDirectory("ghidra-project-installation")
 
         assertNull(
             GhidraProjectInstallationDiscovery.discover(projectDirectory)
+        )
+    }
+
+    @Test
+    fun `returns null when no shared script directory is configured`() {
+        val projectDirectory =
+            Files.createTempDirectory("ghidra-project-installation")
+
+        projectDirectory.resolve("gradle.properties").writeText(
+            "GHIDRA_INSTALL_DIR=/example/ghidra\n"
+        )
+
+        assertNull(
+            GhidraProjectInstallationDiscovery.discoverScriptDirectory(
+                projectDirectory
+            )
         )
     }
 }

@@ -50,6 +50,34 @@ class GhidraProjectLayoutDiscoveryTest {
     }
 
     @Test
+    fun `recognizes generated shared-root Gradle script project`() {
+        val projectRoot = Files.createTempDirectory("ghidra-shared-scripts")
+
+        projectRoot.resolve("build.gradle").writeText(
+            """
+            // Ghidra Script Project
+            apply from: new File(ghidraInstallDir).getCanonicalPath() +
+                "/support/buildExtension.gradle"
+
+            def scriptDirectory =
+                providers.gradleProperty("GHIDRA_SCRIPT_DIR").orNull ?:
+                "ghidra_scripts"
+            """.trimIndent()
+        )
+
+        projectRoot.resolve("gradle.properties").writeText(
+            "GHIDRA_SCRIPT_DIR=/example/ghidra_scripts\n"
+        )
+
+        val layout = GhidraProjectLayoutDiscovery.discover(projectRoot)
+
+        assertEquals(GhidraProjectKind.SCRIPT, layout.kind)
+        assertTrue(layout.isGradleProject)
+        assertTrue(layout.usesGhidraExtensionBuild)
+        assertFalse(projectRoot.resolve("ghidra_scripts").toFile().exists())
+    }
+
+    @Test
     fun `extension project takes precedence over script directory`() {
         val projectRoot = Files.createTempDirectory("ghidra-extension-scripts")
         projectRoot.resolve("build.gradle").writeText("// no Ghidra build integration")

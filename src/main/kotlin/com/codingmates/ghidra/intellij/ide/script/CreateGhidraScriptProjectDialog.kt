@@ -12,6 +12,7 @@ import java.nio.file.Path
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.JComponent
+import javax.swing.JCheckBox
 import javax.swing.JTextField
 
 class CreateGhidraScriptProjectDialog(
@@ -21,6 +22,12 @@ class CreateGhidraScriptProjectDialog(
 
     private val projectNameField = JTextField()
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
+    private val sharedUserScriptDirectoryCheckbox = JCheckBox(
+        "Use shared user script directory: ${
+            Path.of(System.getProperty("user.home"), "ghidra_scripts")
+        }"
+    )
+    
 
     init {
         title = "Create Ghidra Script Project"
@@ -42,6 +49,13 @@ class CreateGhidraScriptProjectDialog(
             name = projectNameField.text.trim(),
             projectParentDirectory = Path.of(parentDirectoryField.text.trim()),
             ghidraInstallationPath = ghidraInstallationPath,
+            sharedScriptDirectory =
+                if (sharedUserScriptDirectoryCheckbox.isSelected) {
+                    Path.of(System.getProperty("user.home"), "ghidra_scripts")
+                }
+                else {
+                    null
+                },
         )
 
     private fun revalidateDialog() {
@@ -69,6 +83,11 @@ class CreateGhidraScriptProjectDialog(
                 }
             }
         }
+
+        row {
+            cell(sharedUserScriptDirectoryCheckbox)
+                .align(AlignX.FILL)
+        }        
     }
 
     override fun doValidate(): ValidationInfo? {

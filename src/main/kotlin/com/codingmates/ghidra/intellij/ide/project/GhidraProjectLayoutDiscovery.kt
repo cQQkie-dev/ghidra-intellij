@@ -18,7 +18,10 @@ object GhidraProjectLayoutDiscovery {
 
         val isScriptProject =
             buildFile != null &&
-                Files.isDirectory(normalizedProjectRoot.resolve("ghidra_scripts"))
+                (
+                    Files.isDirectory(normalizedProjectRoot.resolve("ghidra_scripts")) ||
+                        isGhidraScriptProjectBuild(buildFile)
+                )
 
         val kind = when {
             isExtensionProject -> GhidraProjectKind.EXTENSION
@@ -47,6 +50,14 @@ object GhidraProjectLayoutDiscovery {
 
         return null
     }
+
+    private fun isGhidraScriptProjectBuild(buildFile: Path): Boolean =
+        try {
+            Files.readString(buildFile).contains("// Ghidra Script Project")
+        }
+        catch (_: IOException) {
+            false
+        }
 
     private fun usesGhidraExtensionBuild(buildFile: Path): Boolean =
         try {

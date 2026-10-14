@@ -33,7 +33,10 @@ object GhidraScriptProjectGenerator {
             val settingsFile = projectDirectory.resolve("settings.gradle")
             val gitIgnoreFile = projectDirectory.resolve(".gitignore")
             val localGradlePropertiesFile = projectDirectory.resolve("gradle.properties")
-            val scriptDirectory = projectDirectory.resolve("ghidra_scripts")
+            val scriptDirectory = spec.sharedScriptDirectory
+                ?.toAbsolutePath()
+                ?.normalize()
+                ?: projectDirectory.resolve("ghidra_scripts")
 
             Files.writeString(
                 buildFile,
@@ -53,9 +56,25 @@ object GhidraScriptProjectGenerator {
                 StandardCharsets.UTF_8,
             )
 
+            val localGradleProperties = buildString {
+                append(
+                    "GHIDRA_INSTALL_DIR=" +
+                        spec.ghidraInstallationPath.toAbsolutePath().normalize() +
+                        "\n"
+                )
+
+                spec.sharedScriptDirectory?.let {
+                    append(
+                        "GHIDRA_SCRIPT_DIR=" +
+                            scriptDirectory.toAbsolutePath().normalize() +
+                            "\n"
+                    )
+                }
+            }
+
             Files.writeString(
                 localGradlePropertiesFile,
-                "GHIDRA_INSTALL_DIR=${spec.ghidraInstallationPath.toAbsolutePath().normalize()}\n",
+                localGradleProperties,
                 StandardCharsets.UTF_8,
             )
 
@@ -128,10 +147,14 @@ object GhidraScriptProjectGenerator {
         apply from: new File(ghidraInstallDir).getCanonicalPath() +
             "/support/buildExtension.gradle"
 
+        def scriptDirectory =
+            providers.gradleProperty("GHIDRA_SCRIPT_DIR").orNull ?:
+            "ghidra_scripts"
+
         sourceSets {
             main {
                 java {
-                    srcDir "ghidra_scripts"
+                    srcDir scriptDirectory
                 }
             }
         }
