@@ -1,6 +1,8 @@
 package com.codingmates.ghidra.intellij.ide.action
 
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArtifactFinder
+import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArchiveException
+import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionArchiveInspector
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionInstallationException
 import com.codingmates.ghidra.intellij.ide.extension.GhidraExtensionInstaller
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
@@ -20,6 +22,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
+import java.nio.file.Files
 import java.nio.file.Path
 
 class InstallGhidraExtensionAction : DumbAwareAction(
@@ -78,12 +81,58 @@ class InstallGhidraExtensionAction : DumbAwareAction(
             )
             return
         }
+    
+            val extensionArchive = try {
+            GhidraExtensionArchiveInspector.inspect(archive)
+        }
+        catch (e: GhidraExtensionArchiveException) {
+            showError(
+                project,
+                e.message ?: "The extension ZIP archive is invalid.",
+            )
+            return
+        }
+
+        val extensionsDirectory = Path.of(settingsPath)
+            .resolve("Extensions")
+            .toAbsolutePath()
+            .normalize()
+
+        val existingInstallationDirectory = extensionsDirectory
+            .resolve(extensionArchive.rootDirectoryName)
+            .normalize()
+
+        if (!existingInstallationDirectory.startsWith(extensionsDirectory)) {
+            showError(
+                project,
+                "The extension archive has an unsafe installation directory.",
+            )
+            return
+        }
+
+        val replaceExisting = Files.exists(existingInstallationDirectory)
+
+        val confirmationMessage = if (replaceExisting) {
+            "An installed extension will be replaced.\n\n" +
+                "Extension: ${extensionArchive.extensionName}\n" +
+                "Installed at: $existingInstallationDirectory\n\n" +
+                "Replace it with the latest archive?\n\n$archive\n\n" +
+                "Ghidra must be restarted after installation."
+        }
+        else {
+            "Install the latest extension archive?\n\n$archive\n\n" +
+                "Ghidra must be restarted after installation."
+        }
 
         val confirmation = Messages.showYesNoDialog(
             project,
-            "Install the latest extension archive?\n\n$archive\n\n" +
-                "Ghidra must be restarted after installation.",
-            "Install Ghidra Extension",
+            confirmationMessage,
+            if (replaceExisting) {
+                "Replace Ghidra Extension"
+            }
+            else {
+                "Install Ghidra Extension"
+            },
             Messages.getQuestionIcon(),
         )
 
@@ -111,13 +160,15 @@ class InstallGhidraExtensionAction : DumbAwareAction(
                             archivePath = archive,
                             ghidraInstallation = installation,
                             extensionsDirectory = extensionsDirectory,
+                            replaceExisting = replaceExisting,
                         )
 
                         notify(
                             project,
                             "Ghidra Extension Installed",
-                            "Installed <b>${StringUtil.escapeXmlEntities(installed.archive.extensionName)}</b>" +
-                                " to:<br/><code>${
+                            "${if (replaceExisting) "Replaced" else "Installed"} " +
+                                "<b>${StringUtil.escapeXmlEntities(installed.archive.extensionName)}</b>" +
+                                " at:<br/><code>${
                                     StringUtil.escapeXmlEntities(
                                         installed.installationDirectory.toString()
                                     )

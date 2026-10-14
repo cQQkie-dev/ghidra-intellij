@@ -9,8 +9,10 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.outputStream
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -42,6 +44,40 @@ class GhidraExtensionInstallerTest {
         assertEquals(
             "example content",
             installed.installationDirectory.resolve("data/example.txt").readText(),
+        )
+    }
+
+    @Test
+    fun `replaces installed extension when explicitly requested`() {
+        val archive = createArchive(
+            rootDirectoryName = "ExampleExtension",
+            ghidraVersion = "12.1.4",
+            exampleContent = "new content",
+        )
+        val extensionsDirectory = Files.createTempDirectory("ghidra-extensions")
+        val existingDirectory = extensionsDirectory
+            .resolve("ExampleExtension")
+
+        existingDirectory.createDirectories()
+        existingDirectory.resolve("extension.properties").writeText(
+            "name=Old Extension\nversion=12.1.4\n"
+        )
+        existingDirectory.resolve("old-content.txt").writeText("old content")
+
+        val installed = GhidraExtensionInstaller.install(
+            archivePath = archive,
+            ghidraInstallation = installation("12.1.4"),
+            extensionsDirectory = extensionsDirectory,
+            replaceExisting = true,
+        )
+
+        assertEquals(existingDirectory, installed.installationDirectory)
+        assertEquals(
+            "new content",
+            installed.installationDirectory.resolve("data/example.txt").readText(),
+        )
+        assertFalse(
+            installed.installationDirectory.resolve("old-content.txt").exists()
         )
     }
 
@@ -101,6 +137,7 @@ class GhidraExtensionInstallerTest {
     private fun createArchive(
         rootDirectoryName: String,
         ghidraVersion: String,
+        exampleContent: String = "example content",
     ): Path {
         val archive = Files.createTempFile("ghidra-extension", ".zip")
 
@@ -114,7 +151,7 @@ class GhidraExtensionInstallerTest {
                 """.trimIndent(),
             )
             writeEntry(zip, "$rootDirectoryName/Module.manifest", "")
-            writeEntry(zip, "$rootDirectoryName/data/example.txt", "example content")
+            writeEntry(zip, "$rootDirectoryName/data/example.txt", exampleContent)
         }
 
         return archive

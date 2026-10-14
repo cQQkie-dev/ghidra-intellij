@@ -22,8 +22,8 @@ class GhidraExtensionInstallationException(
 /**
  * Safely installs a validated Ghidra extension archive.
  *
- * Existing extension directories are never overwritten. Replacement support will be added by a
- * later user-facing action that explicitly asks for confirmation.
+ * Existing extension directories are replaced only when [replaceExisting] is true. Callers must
+ * obtain explicit user confirmation before requesting replacement.
  */
 object GhidraExtensionInstaller {
 
@@ -32,6 +32,7 @@ object GhidraExtensionInstaller {
         archivePath: Path,
         ghidraInstallation: GhidraInstallation,
         extensionsDirectory: Path,
+        replaceExisting: Boolean = false,
     ): InstalledGhidraExtension {
         val archive = try {
             GhidraExtensionArchiveInspector.inspect(archivePath)
@@ -71,7 +72,7 @@ object GhidraExtensionInstaller {
             )
         }
 
-        if (Files.exists(targetDirectory)) {
+        if (Files.exists(targetDirectory) && !replaceExisting) {
             throw GhidraExtensionInstallationException(
                 "Extension '${archive.rootDirectoryName}' is already installed at: " +
                     targetDirectory
@@ -81,6 +82,8 @@ object GhidraExtensionInstaller {
         val stagingDirectory = normalizedExtensionsDirectory.resolve(
             ".installing-${archive.rootDirectoryName}-${UUID.randomUUID()}"
         )
+
+        var backupDirectory: Path? = null
 
         try {
             Files.createDirectories(stagingDirectory)
@@ -96,11 +99,25 @@ object GhidraExtensionInstaller {
                 )
             }
 
+            if (Files.exists(targetDirectory)) {
+                backupDirectory = normalizedExtensionsDirectory.resolve(
+                    ".replacing-${archive.rootDirectoryName}-${UUID.randomUUID()}"
+                )
+
+                Files.move(
+                    targetDirectory,
+                    backupDirectory,
+                    StandardCopyOption.ATOMIC_MOVE,
+                )
+            }
+
             Files.move(
                 stagedExtensionDirectory,
                 targetDirectory,
                 StandardCopyOption.ATOMIC_MOVE,
             )
+
+            backupDirectory?.let(::deleteRecursively)
 
             return InstalledGhidraExtension(
                 archive = archive,
@@ -108,9 +125,18 @@ object GhidraExtensionInstaller {
             )
         }
         catch (e: GhidraExtensionInstallationException) {
+            restoreBackup(
+                backupDirectory = backupDirectory,
+                targetDirectory = targetDirectory,
+            )
             throw e
         }
         catch (e: IOException) {
+            restoreBackup(
+                backupDirectory = backupDirectory,
+                targetDirectory = targetDirectory,
+            )
+
             throw GhidraExtensionInstallationException(
                 "Failed to install Ghidra extension '${archive.extensionName}'.",
                 e,
@@ -152,6 +178,30 @@ object GhidraExtensionInstaller {
                     }
                 }
             }
+        }
+    }
+
+    private fun restoreBackup(
+        backupDirectory: Path?,
+        targetDirectory: Path,
+    ) {
+        if (
+            backupDirectory == null ||
+            !Files.exists(backupDirectory) ||
+            Files.exists(targetDirectory)
+        ) {
+            return
+        }
+
+        try {
+            Files.move(
+                backupDirectory,
+                targetDirectory,
+                StandardCopyOption.ATOMIC_MOVE,
+            )
+        }
+        catch (_: IOException) {
+            // Preserve the original installation failure. The backup remains available for recovery.
         }
     }
 
