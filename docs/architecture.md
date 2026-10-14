@@ -86,10 +86,16 @@ possible so it can be unit-tested.
 
 - Ghidra owns extension build and packaging semantics.
 - Generated projects use Ghidra's official Skeleton and `buildExtension.gradle` contract.
-- Gradle-backed projects own their Ghidra dependency classpath.
-- The plugin must not attach duplicate Ghidra JARs to Gradle-backed modules.
+- Gradle-backed projects obtain their Ghidra compile and runtime classpath through
+  Ghidra's official `support/buildExtension.gradle`.
+- The Ghidra facet currently also attaches an installation-specific Ghidra library with
+  matching class JARs, source ZIPs, and API Javadocs. IntelliJ requires matching class
+  roots in the same library model to associate Ghidra source ZIPs and documentation
+  with Gradle-managed Ghidra dependencies.
 - Ghidra installations are versioned and may differ between projects.
 - Absolute local Ghidra paths must not be written to version-controlled project files by default.
-- Installation-specific Gradle properties are supplied by the plugin at execution/import time.
+  Generated projects store `GHIDRA_INSTALL_DIR` in Git-ignored local `gradle.properties`.
+- The plug-in reads the generated local Gradle property when automatically configuring the
+  project facet after Gradle import.
 - GUI and headless launch configurations must derive required VM settings from the selected
   Ghidra installation where possible.
