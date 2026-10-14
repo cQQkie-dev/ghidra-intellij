@@ -51,7 +51,7 @@
 | Java debugging | Yes | Direct classpath Extension debugging | Complete |
 | Processor/SLEIGH language build | Yes | `Build SLEIGH Language` Ant action | Complete |
 | PyGhidra run/debug | Yes | Planned | Later |
-| Script Manager opens file in IDE | Yes, socket | Planned | Later |
+| Script Manager opens file in IDE | Yes, socket | Yes, Eclipse-compatible loopback listener | Complete |
 | C/C++ symbol lookup | Yes, Eclipse CDT | Deferred | Later |
 | Gradle source/Javadoc integration without duplicate facet roots | N/A | Planned | Later |
 
@@ -106,6 +106,33 @@ IntelliJ Debug
 Development-classpath extensions do not appear in Ghidra's Extension Manager because
 they are not installed under the user `Extensions/` directory. The Extension Manager
 is used only for packaged and installed extension ZIPs.
+
+## Validated Script Manager editor integration
+
+The IntelliJ plug-in provides an Eclipse GhidraDev-compatible Script Editor listener.
+
+The listener is disabled by default and, when enabled, binds only to:
+
+```text
+127.0.0.1:12321
+```
+
+It accepts the existing Ghidra Eclipse Integration protocol:
+```
+open_/absolute/path/to/script.java
+```
+
+The following workflow was validated with Ghidra 12.1.4 PUBLIC:
+
+```text
+IntelliJ Settings -> Tools -> Ghidra Script Editor
+-> enable listener on port 12321
+-> Ghidra Edit -> Tool Options -> Script Editor Port = 12321
+-> Ghidra Script Manager -> Edit with Eclipse
+-> requested script opens in IntelliJ
+```
+
+No Eclipse installation directory or Eclipse workspace configuration is required for this IntelliJ listener. The Ghidra action remains named Edit with Eclipse because it is part of Ghidra's existing Eclipse Integration UI.
 
 ## Validated headless workflow
 
