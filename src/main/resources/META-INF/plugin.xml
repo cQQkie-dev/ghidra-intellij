@@ -18,6 +18,12 @@
                 parentId="tools"
                 instance="com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationsConfigurable"
                 displayName="Ghidra Installations" />
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.codingmates.ghidra.intellij.ide.scripteditor.GhidraScriptEditorConfigurable"
+                displayName="Ghidra Script Editor" />
+        <postStartupActivity
+                implementation="com.codingmates.ghidra.intellij.ide.scripteditor.GhidraScriptEditorStartupActivity" />
     </extensions>
 
     <actions>
