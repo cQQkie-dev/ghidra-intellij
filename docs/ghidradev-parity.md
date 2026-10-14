@@ -46,7 +46,7 @@
 | Automatic Extension development launcher | No | Created after generated Extension Project import | Complete |
 | Import existing module source | Yes | Filesystem recognition and manual facet setup | Partial |
 | Export/distribute extension | Yes | `distributeExtension` Gradle action | Complete |
-| Install extension | Via Ghidra GUI | Safe IntelliJ ZIP installation action | Complete |
+| Install/update extension | Via Ghidra GUI | Safe IntelliJ ZIP installation and explicit replacement action | Complete |
 | Ghidra GUI launcher | Yes | Yes | Complete |
 | Headless launcher | Yes | `AnalyzeHeadless` through Ghidra Launcher Run Configuration | Complete |
 | Java debugging | Yes | Direct classpath Extension debugging | Complete |
@@ -208,5 +208,5 @@ This project has substantially extended that foundation with:
 - Gradle project opening/import notification actions;
 - automatic generated-project facet configuration;
 - automatic Extension development launcher creation;
-- extension distribution, artifact discovery, archive validation, and safe installation;
+- extension distribution, artifact discovery, archive validation, safe installation, and explicit replacement;
 - Processor/SLEIGH Ant build support.
