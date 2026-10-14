@@ -44,7 +44,7 @@
 | Open/import generated Gradle project | No | Notification action opens in a new IntelliJ window | Complete |
 | Automatic generated-project facet setup | No | Full facet with classes, sources, Javadocs, and selected runtime | Complete |
 | Automatic Extension development launcher | No | Created after generated Extension Project import | Complete |
-| Import existing module source | Yes | Filesystem recognition and manual facet setup | Partial |
+| Import existing module source | Yes | Import existing Gradle Extension source, select target runtime, migration warning, local target configuration, Gradle import, facet, and launcher | Complete |
 | Export/distribute extension | Yes | `distributeExtension` Gradle action | Complete |
 | Install/update extension | Via Ghidra GUI | Safe IntelliJ ZIP installation and explicit replacement action | Complete |
 | Ghidra GUI launcher | Yes | Yes | Complete |
@@ -208,5 +208,6 @@ This project has substantially extended that foundation with:
 - Gradle project opening/import notification actions;
 - automatic generated-project facet configuration;
 - automatic Extension development launcher creation;
+- existing Gradle Extension source import with historical target-version detection and migration warnings;
 - extension distribution, artifact discovery, archive validation, safe installation, and explicit replacement;
 - Processor/SLEIGH Ant build support.
