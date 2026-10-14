@@ -29,6 +29,7 @@ class GhidraInstallationsConfigurable : Configurable {
     private val installationList = JBList(installationListModel)
     private val defaultInstallationLabel = JBLabel()
     private val gradleExecutableField = JTextField()
+    private val antExecutableField = JTextField()
     private val skeletonTemplateField = JTextField()
     private var pendingDefaultPath: Path? = null
 
@@ -78,6 +79,31 @@ class GhidraInstallationsConfigurable : Configurable {
             BorderLayout.EAST,
         )
 
+        val antExecutablePanel = JPanel(BorderLayout(JBUI.scale(6), 0))
+        antExecutablePanel.add(
+            JBLabel("Ant executable:"),
+            BorderLayout.WEST,
+        )
+        antExecutablePanel.add(
+            antExecutableField,
+            BorderLayout.CENTER,
+        )
+
+        val browseAntButton = JButton("Browse...")
+        browseAntButton.addActionListener {
+            val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+            descriptor.title = "Select Apache Ant Executable"
+
+            FileChooser.chooseFile(descriptor, null, null)?.let { selectedFile ->
+                antExecutableField.text = selectedFile.path
+            }
+        }
+
+        antExecutablePanel.add(
+            browseAntButton,
+            BorderLayout.EAST,
+        )
+
         val skeletonTemplatePanel = JPanel(BorderLayout(JBUI.scale(6), 0))
         skeletonTemplatePanel.add(
             JBLabel("Skeleton template:"),
@@ -104,9 +130,10 @@ class GhidraInstallationsConfigurable : Configurable {
         )
 
         val configurationPanel = JPanel(
-            java.awt.GridLayout(2, 1, 0, JBUI.scale(6))
+            java.awt.GridLayout(3, 1, 0, JBUI.scale(6))
         )
         configurationPanel.add(gradleExecutablePanel)
+        configurationPanel.add(antExecutablePanel)
         configurationPanel.add(skeletonTemplatePanel)
 
         centerPanel.add(configurationPanel, BorderLayout.SOUTH)
@@ -151,6 +178,12 @@ class GhidraInstallationsConfigurable : Configurable {
         val pendingGradleExecutable =
             gradleExecutableField.text.trim()
 
+        val currentAntExecutable =
+            registry.antExecutablePath()?.toString().orEmpty()
+
+        val pendingAntExecutable =
+            antExecutableField.text.trim()
+
         val currentSkeletonTemplate =
             registry.skeletonTemplatePath()?.toString().orEmpty()
 
@@ -160,6 +193,7 @@ class GhidraInstallationsConfigurable : Configurable {
         return currentPaths != pendingPaths ||
             currentDefault != pendingDefault ||
             currentGradleExecutable != pendingGradleExecutable ||
+            currentAntExecutable != pendingAntExecutable ||
             currentSkeletonTemplate != pendingSkeletonTemplate
     }
 
@@ -169,6 +203,11 @@ class GhidraInstallationsConfigurable : Configurable {
             .map { installationListModel.getElementAt(it) }
 
         val gradleExecutablePath = gradleExecutableField.text
+            .trim()
+            .takeIf(String::isNotEmpty)
+            ?.let(Path::of)
+
+        val antExecutablePath = antExecutableField.text
             .trim()
             .takeIf(String::isNotEmpty)
             ?.let(Path::of)
@@ -183,12 +222,17 @@ class GhidraInstallationsConfigurable : Configurable {
                 registry.setGradleExecutablePath(gradleExecutablePath)
             }
 
+            if (antExecutablePath != null) {
+                registry.setAntExecutablePath(antExecutablePath)
+            }
+
             if (skeletonTemplatePath != null) {
                 GhidraSkeletonTemplateDiscovery.discover(skeletonTemplatePath)
             }
 
             registry.replaceAll(configuredPaths, pendingDefaultPath)
             registry.setGradleExecutablePath(gradleExecutablePath)
+            registry.setAntExecutablePath(antExecutablePath)
             registry.setSkeletonTemplatePath(skeletonTemplatePath)
         }
         catch (e: GhidraInstallationException) {
@@ -210,6 +254,8 @@ class GhidraInstallationsConfigurable : Configurable {
         pendingDefaultPath = registry.defaultConfiguredPath()
         gradleExecutableField.text =
             registry.gradleExecutablePath()?.toString().orEmpty()
+        antExecutableField.text =
+            registry.antExecutablePath()?.toString().orEmpty()
         skeletonTemplateField.text =
             registry.skeletonTemplatePath()?.toString().orEmpty()
 

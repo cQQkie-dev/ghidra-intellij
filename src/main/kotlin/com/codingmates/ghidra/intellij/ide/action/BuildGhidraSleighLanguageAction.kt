@@ -3,6 +3,7 @@ package com.codingmates.ghidra.intellij.ide.action
 import com.codingmates.ghidra.intellij.ide.extension.GhidraSleighBuildSupport
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -12,6 +13,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -25,6 +27,10 @@ class BuildGhidraSleighLanguageAction : DumbAwareAction(
     "Compile the current Ghidra Processor/SLEIGH language definition",
     GhidraIcons.Ghidra,
 ) {
+
+    private val installationRegistry: GhidraInstallationRegistryService
+        get() = ApplicationManager.getApplication()
+            .getService(GhidraInstallationRegistryService::class.java)
 
     override fun getActionUpdateThread(): ActionUpdateThread =
         ActionUpdateThread.BGT
@@ -103,7 +109,11 @@ class BuildGhidraSleighLanguageAction : DumbAwareAction(
 
                     try {
                         val output = CapturingProcessHandler(
-                            createCommandLine(projectRoot)
+                            createCommandLine(
+                                projectRoot = projectRoot,
+                                antExecutable =
+                                    installationRegistry.antExecutablePath()?.toString(),
+                            )
                         ).runProcess()
 
                         if (output.exitCode == 0) {
@@ -132,8 +142,9 @@ class BuildGhidraSleighLanguageAction : DumbAwareAction(
                         notify(
                             project,
                             "Ghidra SLEIGH Language Build Failed",
-                            "Unable to run Ant. Install Apache Ant and ensure <code>ant</code> " +
-                                "is available on PATH.<br/><br/>${
+                            "Unable to run Ant. Configure an Ant executable in " +
+                                "Settings → Tools → Ghidra Installations, or install Apache Ant " +
+                                "and ensure <code>ant</code> is available on PATH.<br/><br/>${
                                     StringUtil.escapeXmlEntities(
                                         e.message ?: "Unexpected error."
                                     )
@@ -146,8 +157,11 @@ class BuildGhidraSleighLanguageAction : DumbAwareAction(
         )
     }
 
-    private fun createCommandLine(projectRoot: Path): GeneralCommandLine {
-        val antExecutable = if (
+    private fun createCommandLine(
+        projectRoot: Path,
+        antExecutable: String?,
+    ): GeneralCommandLine {
+        val executable = antExecutable ?: if (
             System.getProperty("os.name").startsWith("Windows", true)
         ) {
             "ant.bat"
@@ -156,7 +170,7 @@ class BuildGhidraSleighLanguageAction : DumbAwareAction(
             "ant"
         }
 
-        return GeneralCommandLine(antExecutable)
+        return GeneralCommandLine(executable)
             .withParameters(
                 "-f",
                 GhidraSleighBuildSupport.buildLanguageFile(projectRoot).toString(),

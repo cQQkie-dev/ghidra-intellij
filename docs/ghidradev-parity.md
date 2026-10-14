@@ -24,7 +24,7 @@
 | Ghidra GUI launcher | `ghidra.GhidraLauncher ghidra.GhidraRun` |
 | Headless launcher | `ghidra.GhidraLauncher ghidra.app.util.headless.AnalyzeHeadless` |
 | Generated project local configuration | Git-ignored `gradle.properties` with `GHIDRA_INSTALL_DIR` |
-| Processor/SLEIGH language build | `ant -f data/buildLanguage.xml` |
+| Processor/SLEIGH language build | `ant -f data/buildLanguage.xml`, using configured Ant executable or `ant` from PATH |
 | Processor local Ant configuration | Git-ignored `.antProperties.xml` with `ghidra.install.dir` |
 
 ## Feature matrix
