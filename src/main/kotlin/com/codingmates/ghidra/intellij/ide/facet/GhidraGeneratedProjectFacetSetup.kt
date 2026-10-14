@@ -1,5 +1,7 @@
 package com.codingmates.ghidra.intellij.ide.facet
 
+import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
+import com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraDevelopmentLauncherConfigurator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
@@ -59,11 +61,19 @@ object GhidraGeneratedProjectFacetSetup {
     ) {
         ApplicationManager.getApplication().invokeLater(
             {
-                val configured =
-                    !project.isDisposed &&
+                val configuredProjectKind =
+                    if (project.isDisposed) {
+                        null
+                    }
+                    else {
                         GhidraGeneratedProjectConfigurator.configure(project)
+                    }
 
-                if (configured || disconnectAfterAttempt) {
+                if (configuredProjectKind == GhidraProjectKind.EXTENSION) {
+                    GhidraDevelopmentLauncherConfigurator.ensure(project)
+                }
+
+                if (configuredProjectKind != null || disconnectAfterAttempt) {
                     connection.disconnect()
                 }
             },

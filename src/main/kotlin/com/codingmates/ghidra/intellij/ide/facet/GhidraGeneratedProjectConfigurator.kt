@@ -27,29 +27,29 @@ object GhidraGeneratedProjectConfigurator {
      *
      * @return true when a recognized Ghidra project module was found and configured.
      */
-    fun configure(project: Project): Boolean {
+    fun configure(project: Project): GhidraProjectKind? {
         val projectRoot = project.basePath
             ?.let(Path::of)
             ?.toAbsolutePath()
             ?.normalize()
-            ?: return false
+            ?: return null
 
         val layout = GhidraProjectLayoutDiscovery.discover(projectRoot)
         if (
             layout.kind != GhidraProjectKind.EXTENSION &&
             layout.kind != GhidraProjectKind.SCRIPT
         ) {
-            return false
+            return null
         }
 
         val configuredInstallationPath =
             GhidraProjectInstallationDiscovery.discover(projectRoot)
-                ?: return false
+                ?: return null
 
         val module = findProjectModule(
             project = project,
             projectRoot = projectRoot,
-        ) ?: return false
+        ) ?: return null
 
         val installationRegistry = ApplicationManager.getApplication()
             .getService(GhidraInstallationRegistryService::class.java)
@@ -64,7 +64,7 @@ object GhidraGeneratedProjectConfigurator {
             installation = installation,
         )
 
-        return true
+        return layout.kind
     }
 
     private fun findProjectModule(

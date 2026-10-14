@@ -4,10 +4,7 @@ import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
-import com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherConfiguration
-import com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherConfigurationType
-import com.intellij.execution.RunManager
-import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraDevelopmentLauncherConfigurator
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -45,7 +42,9 @@ class CreateGhidraDevelopmentLauncherAction : DumbAwareAction(
 
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.getData(CommonDataKeys.PROJECT) ?: return
-        val projectRoot = project.basePath?.let(Path::of) ?: return
+        if (project.basePath == null) {
+            return
+        }
 
         val facet = GhidraFacet.findAnyInProject(project)
         if (facet?.installationPath.isNullOrBlank()) {
@@ -57,51 +56,20 @@ class CreateGhidraDevelopmentLauncherAction : DumbAwareAction(
             return
         }
 
-        val runManager = RunManager.getInstance(project)
+        val launcher = GhidraDevelopmentLauncherConfigurator.ensure(project)
 
-        val existingConfiguration = runManager.allSettings.firstOrNull { settings ->
-            settings.type.id == "GhidraLauncherConfiguration" &&
-                settings.name == "${project.name} Ghidra"
-        }
-
-        if (existingConfiguration != null) {
-            runManager.selectedConfiguration = existingConfiguration
-
+        if (!launcher.created) {
             Messages.showInfoMessage(
                 project,
-                "Selected existing Ghidra development launcher:\n" +
-                    existingConfiguration.name,
+                "Selected existing Ghidra development launcher:\n${launcher.name}",
                 "Create Ghidra Development Launcher",
             )
             return
         }
 
-        val configurationType = ConfigurationTypeUtil.findConfigurationType(
-            GhidraLauncherConfigurationType::class.java,
-        )
-
-        val factory = configurationType.configurationFactories.single()
-
-        val settings = runManager.createConfiguration(
-            "${project.name} Ghidra",
-            factory,
-        )
-
-        val configuration =
-            settings.configuration as GhidraLauncherConfiguration
-
-        configuration.setAlternativeJrePath(null)
-        configuration.setAlternativeJrePathEnabled(false)
-        configuration.setWorkingDirectory(projectRoot.toString())
-        configuration.setHeadless(false)
-        configuration.setArgs("")
-
-        runManager.addConfiguration(settings)
-        runManager.selectedConfiguration = settings
-
         Messages.showInfoMessage(
             project,
-            "Created Ghidra development launcher:\n${settings.name}\n\n" +
+            "Created Ghidra development launcher:\n${launcher.name}\n\n" +
                 "Use Run or Debug from the main toolbar to start Ghidra.",
             "Create Ghidra Development Launcher",
         )
