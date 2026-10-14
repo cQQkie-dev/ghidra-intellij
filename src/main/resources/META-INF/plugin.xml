@@ -28,10 +28,10 @@
 
     <actions>
         <action
-                id="com.codingmates.ghidra.intellij.CreateGhidraExtensionProject"
-                class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraExtensionProjectAction"
-                text="New Ghidra Extension Project"
-                description="Create a Gradle-backed Ghidra extension project">
+                id="com.codingmates.ghidra.intellij.CreateGhidraScript"
+                class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraScriptAction"
+                text="New Ghidra Script"
+                description="Create a new Java or Python Ghidra script">
             <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
         <action
@@ -42,10 +42,17 @@
             <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
         <action
-                id="com.codingmates.ghidra.intellij.CreateGhidraScript"
-                class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraScriptAction"
-                text="New Ghidra Script"
-                description="Create a new Java or Python Ghidra script">
+                id="com.codingmates.ghidra.intellij.CreateGhidraExtensionProject"
+                class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraExtensionProjectAction"
+                text="New Ghidra Extension Project"
+                description="Create a Gradle-backed Ghidra extension project">
+            <add-to-group group-id="ToolsMenu" anchor="first" />
+        </action>
+                <action
+                id="com.codingmates.ghidra.intellij.ImportGhidraExtensionSource"
+                class="com.codingmates.ghidra.intellij.ide.action.ImportGhidraExtensionSourceAction"
+                text="Import Ghidra Extension Source"
+                description="Open an existing Gradle-backed Ghidra extension project">
             <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
         <action
