@@ -47,7 +47,7 @@
 | Export/distribute extension | Yes | `distributeExtension` Gradle action | Complete |
 | Install extension | Via Ghidra GUI | Safe IntelliJ ZIP installation action | Complete |
 | Ghidra GUI launcher | Yes | Yes | Complete |
-| Headless launcher | Yes | Framework present; manual validation pending | Partial |
+| Headless launcher | Yes | `AnalyzeHeadless` through Ghidra Launcher Run Configuration | Complete |
 | Java debugging | Yes | Direct classpath Extension debugging | Complete |
 | Processor/SLEIGH language build | Yes | `Build SLEIGH Language` Ant action | Complete |
 | PyGhidra run/debug | Yes | Planned | Later |
@@ -106,6 +106,33 @@ IntelliJ Debug
 Development-classpath extensions do not appear in Ghidra's Extension Manager because
 they are not installed under the user `Extensions/` directory. The Extension Manager
 is used only for packaged and installed extension ZIPs.
+
+## Validated headless workflow
+
+Ghidra 12.1.4 PUBLIC headless mode was successfully launched through the custom IntelliJ
+`Ghidra Launcher` Run Configuration.
+
+The following command arguments were validated:
+
+```text
+/tmp/ghidra-intellij-headless HeadlessSandbox -import /usr/bin/true -noanalysis
+```
+
+The parent project directory must already exist before invoking AnalyzeHeadless:
+```
+mkdir -p /tmp/ghidra-intellij-headless
+```
+
+Validated workflow:
+```text
+IntelliJ Run
+-> ghidra.GhidraLauncher ghidra.app.util.headless.AnalyzeHeadless
+-> Ghidra project created
+-> ELF input imported
+-> analysis skipped with -noanalysis
+-> project saved successfully
+-> process exits with code 0
+```
 
 ## Validated extension template workflows
 
