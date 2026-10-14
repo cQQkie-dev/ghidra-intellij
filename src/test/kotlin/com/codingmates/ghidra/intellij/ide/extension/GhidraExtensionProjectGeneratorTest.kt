@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GhidraExtensionProjectGeneratorTest {
@@ -34,6 +35,7 @@ class GhidraExtensionProjectGeneratorTest {
         assertTrue(generated.buildFile.exists())
         assertTrue(generated.settingsFile.exists())
         assertTrue(generated.localGradlePropertiesFile.exists())
+        assertNull(generated.antPropertiesFile)
 
         assertTrue(projectDirectory.resolve("extension.properties").exists())
         assertTrue(projectDirectory.resolve("Module.manifest").exists())
@@ -78,6 +80,7 @@ class GhidraExtensionProjectGeneratorTest {
                     GhidraExtensionTemplate.LOADER,
                     GhidraExtensionTemplate.FILE_SYSTEM,
                     GhidraExtensionTemplate.EXPORTER,
+                    GhidraExtensionTemplate.PROCESSOR,
                 ),
             )
         )
@@ -141,7 +144,56 @@ class GhidraExtensionProjectGeneratorTest {
             exporterSource.readText().contains(
                 "class ExampleExtensionExporter"
             )
-        )        
+        )
+
+        assertTrue(generated.projectDirectory.resolve("data/buildLanguage.xml").exists())
+        assertTrue(generated.projectDirectory.resolve("data/sleighArgs.txt").exists())
+        assertTrue(
+            generated.projectDirectory
+                .resolve("data/languages/skel.slaspec")
+                .exists()
+        )
+        assertTrue(generated.antPropertiesFile!!.exists())
+    }
+    
+    @Test
+    fun `creates Processor SLEIGH template and local Ant properties`() {
+        val parentDirectory = Files.createTempDirectory("ghidra-extension-projects")
+        val skeletonDirectory = createSkeletonTemplate()
+
+        val generated = GhidraExtensionProjectGenerator.create(
+            GhidraExtensionProjectSpec(
+                name = "ExampleProcessor",
+                projectParentDirectory = parentDirectory,
+                skeletonTemplatePath = skeletonDirectory,
+                ghidraInstallationPath = Path.of("/example/ghidra"),
+                templates = setOf(GhidraExtensionTemplate.PROCESSOR),
+            )
+        )
+
+        val projectDirectory = generated.projectDirectory
+
+        assertTrue(projectDirectory.resolve("data/buildLanguage.xml").exists())
+        assertTrue(projectDirectory.resolve("data/sleighArgs.txt").exists())
+        assertTrue(projectDirectory.resolve("data/languages/skel.slaspec").exists())
+        assertTrue(projectDirectory.resolve("data/languages/skel.ldefs").exists())
+
+        assertTrue(generated.antPropertiesFile!!.exists())
+        assertEquals(
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project>
+              <property name="ghidra.install.dir" value="/example/ghidra" />
+            </project>
+            """.trimIndent() + "\n",
+            generated.antPropertiesFile.readText(),
+        )
+
+        assertTrue(
+            projectDirectory.resolve(".gitignore")
+                .readText()
+                .contains(".antProperties.xml")
+        )
     }
 
     @Test
@@ -256,6 +308,11 @@ class GhidraExtensionProjectGeneratorTest {
 
         skeletonDirectory.resolve("data/languages").createDirectories()
         skeletonDirectory.resolve("data/languages/skel.slaspec").writeText("language\n")
+        skeletonDirectory.resolve("data/languages/skel.ldefs").writeText("definitions\n")
+        skeletonDirectory.resolve("data/languages/skel.pspec").writeText("processor\n")
+        skeletonDirectory.resolve("data/languages/skel.cspec").writeText("compiler\n")
+        skeletonDirectory.resolve("data/languages/skel.sinc").writeText("include\n")
+        skeletonDirectory.resolve("data/languages/skel.opinion").writeText("opinions\n")
         skeletonDirectory.resolve("data/buildLanguage.xml").writeText("<project />")
         skeletonDirectory.resolve("data/sleighArgs.txt").writeText("# args\n")
 

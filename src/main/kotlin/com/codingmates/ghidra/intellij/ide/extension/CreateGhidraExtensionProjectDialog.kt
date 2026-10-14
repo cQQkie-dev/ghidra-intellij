@@ -32,6 +32,9 @@ class CreateGhidraExtensionProjectDialog(
         "File System - opens a file system format for browsing or batch import"
     )
     private val exporterTemplateCheckbox = JCheckBox("Exporter - exports a Ghidra program")
+    private val processorTemplateCheckbox = JCheckBox(
+        "Processor/SLEIGH - defines a processor architecture and instruction language"
+    )
 
     private val templatesPanel = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -40,6 +43,7 @@ class CreateGhidraExtensionProjectDialog(
         add(loaderTemplateCheckbox)
         add(fileSystemTemplateCheckbox)
         add(exporterTemplateCheckbox)
+        add(processorTemplateCheckbox)
     }
 
     init {
@@ -89,6 +93,10 @@ class CreateGhidraExtensionProjectDialog(
 
             if (exporterTemplateCheckbox.isSelected) {
                 add(GhidraExtensionTemplate.EXPORTER)
+            }
+
+            if (processorTemplateCheckbox.isSelected) {
+                add(GhidraExtensionTemplate.PROCESSOR)
             }
         }
 

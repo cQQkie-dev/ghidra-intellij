@@ -46,6 +46,8 @@ object GhidraExtensionProjectGenerator {
             copyEmptyExtensionSkeleton(
                 skeletonDirectory = skeleton.canonicalPath,
                 projectDirectory = projectDirectory,
+                includeProcessorTemplate =
+                    GhidraExtensionTemplate.PROCESSOR in spec.templates,
             )
 
             copySelectedJavaTemplates(
@@ -58,6 +60,8 @@ object GhidraExtensionProjectGenerator {
             val settingsFile = projectDirectory.resolve("settings.gradle")
             val localGradlePropertiesFile =
                 projectDirectory.resolve("gradle.properties")
+            val antPropertiesFile =
+                projectDirectory.resolve(".antProperties.xml")
 
             Files.copy(
                 skeleton.buildTemplateFile,
@@ -88,6 +92,13 @@ object GhidraExtensionProjectGenerator {
                 StandardCharsets.UTF_8,
             )
 
+            if (GhidraExtensionTemplate.PROCESSOR in spec.templates) {
+                antPropertiesFile.writeText(
+                    antPropertiesTemplate(spec.ghidraInstallationPath),
+                    StandardCharsets.UTF_8,
+                )
+            }
+
             val gitIgnoreFile = projectDirectory.resolve(".gitignore")
             gitIgnoreFile.writeText(
                 skeleton.gitIgnoreTemplateFile.readText() +
@@ -95,6 +106,7 @@ object GhidraExtensionProjectGenerator {
 
                     # IntelliJ-local Ghidra target configuration
                     gradle.properties
+                    .antProperties.xml
                     .idea/
                     *.iml
                     """.trimIndent() +
@@ -112,6 +124,7 @@ object GhidraExtensionProjectGenerator {
                 buildFile = buildFile,
                 settingsFile = settingsFile,
                 localGradlePropertiesFile = localGradlePropertiesFile,
+                antPropertiesFile = antPropertiesFile.takeIf(Files::isRegularFile),
             )
         }
         catch (e: IOException) {
@@ -135,6 +148,7 @@ object GhidraExtensionProjectGenerator {
     private fun copyEmptyExtensionSkeleton(
         skeletonDirectory: Path,
         projectDirectory: Path,
+        includeProcessorTemplate: Boolean,
     ) {
         Files.walk(skeletonDirectory).use { paths ->
             paths
@@ -146,7 +160,10 @@ object GhidraExtensionProjectGenerator {
 
                     if (
                         relativePathString.isEmpty() ||
-                        shouldExcludeFromEmptyExtension(relativePathString)
+                        shouldExcludeFromEmptyExtension(
+                            relativePath = relativePathString,
+                            includeProcessorTemplate = includeProcessorTemplate,
+                        )
                     ) {
                         return@forEach
                     }
@@ -186,8 +203,12 @@ object GhidraExtensionProjectGenerator {
         Files.createDirectories(destinationDirectory)
 
         spec.templates.forEach { template ->
+            val skeletonFileName = template.skeletonFileName ?: return@forEach
+            val skeletonClassName = template.skeletonClassName ?: return@forEach
+            val generatedClassSuffix = template.generatedClassSuffix ?: return@forEach
+
             val sourceFile = skeleton.javaTemplateDirectory
-                .resolve(template.skeletonFileName)
+                .resolve(skeletonFileName)
 
             if (!Files.isRegularFile(sourceFile)) {
                 throw GhidraExtensionProjectGenerationException(
@@ -196,7 +217,7 @@ object GhidraExtensionProjectGenerator {
             }
 
             val generatedClassName =
-                classBaseName + template.generatedClassSuffix
+                classBaseName + generatedClassSuffix
 
             val source = Files.readString(sourceFile, StandardCharsets.UTF_8)
 
@@ -206,7 +227,7 @@ object GhidraExtensionProjectGenerator {
                     "package $packageName;",
                 )
                 .replace(
-                    template.skeletonClassName,
+                    skeletonClassName,
                     generatedClassName,
                 )
 
@@ -216,6 +237,26 @@ object GhidraExtensionProjectGenerator {
                 StandardCharsets.UTF_8,
             )
         }
+    }
+
+    private fun antPropertiesTemplate(
+        ghidraInstallationPath: Path,
+    ): String {
+        val installationPath = ghidraInstallationPath
+            .toAbsolutePath()
+            .normalize()
+            .toString()
+            .replace("&", "&amp;")
+            .replace("\"", "&quot;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project>
+              <property name="ghidra.install.dir" value="$installationPath" />
+            </project>
+            """.trimIndent() + "\n"
     }
 
     private fun extensionPackageName(projectName: String): String =
@@ -233,16 +274,22 @@ object GhidraExtensionProjectGenerator {
 
     private fun shouldExcludeFromEmptyExtension(
         relativePath: String,
+        includeProcessorTemplate: Boolean,
     ): Boolean =
-            relativePath == "build.gradle" ||
+        relativePath == "build.gradle" ||
             relativePath == "src/main/help" ||
             relativePath.startsWith("src/main/help/") ||
             relativePath == "buildTemplate.gradle" ||
             relativePath == "gitignore" ||
             relativePath == "src/main/java/skeleton" ||
             relativePath.startsWith("src/main/java/skeleton/") ||
-            relativePath == "data/buildLanguage.xml" ||
-            relativePath == "data/sleighArgs.txt" ||
-            relativePath == "data/languages" ||
-            relativePath.startsWith("data/languages/")
+            (
+                !includeProcessorTemplate &&
+                    (
+                        relativePath == "data/buildLanguage.xml" ||
+                            relativePath == "data/sleighArgs.txt" ||
+                            relativePath == "data/languages" ||
+                            relativePath.startsWith("data/languages/")
+                    )
+                )
 }

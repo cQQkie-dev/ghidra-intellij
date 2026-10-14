@@ -4,9 +4,9 @@ import java.nio.file.Path
 
 enum class GhidraExtensionTemplate(
     val displayName: String,
-    val skeletonFileName: String,
-    val skeletonClassName: String,
-    val generatedClassSuffix: String,
+    val skeletonFileName: String?,
+    val skeletonClassName: String?,
+    val generatedClassSuffix: String?,
 ) {
     PLUGIN(
         displayName = "Plugin",
@@ -37,6 +37,12 @@ enum class GhidraExtensionTemplate(
         skeletonFileName = "SkeletonExporter.java",
         skeletonClassName = "SkeletonExporter",
         generatedClassSuffix = "Exporter",
+    ),
+    PROCESSOR(
+        displayName = "Processor/SLEIGH",
+        skeletonFileName = null,
+        skeletonClassName = null,
+        generatedClassSuffix = null,
     );
 
     override fun toString(): String = displayName
@@ -55,6 +61,7 @@ data class GeneratedGhidraExtensionProject(
     val buildFile: Path,
     val settingsFile: Path,
     val localGradlePropertiesFile: Path,
+    val antPropertiesFile: Path?,
 )
 
 class GhidraExtensionProjectGenerationException(
