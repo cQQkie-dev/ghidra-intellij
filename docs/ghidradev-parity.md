@@ -51,7 +51,9 @@
 | Headless launcher | Yes | `AnalyzeHeadless` through Ghidra Launcher Run Configuration | Complete |
 | Java debugging | Yes | Direct classpath Extension debugging | Complete |
 | Processor/SLEIGH language build | Yes | `Build SLEIGH Language` Ant action | Complete |
-| PyGhidra run/debug | Yes | Planned | Later |
+| PyGhidra GUI launch | Yes | Official `pyghidraRun` GUI launcher with Gradle extension class/resource loading on Linux | Complete |
+| PyGhidra Java extension debugging | Yes | Manual JDWP attach workflow at `127.0.0.1:18001`; preparation action configures `PYGHIDRA_DEBUG=1` | Complete |
+| Native PyGhidra Python debugging | Yes | Planned; depends on optional IntelliJ Python plug-in integration | Later |
 | Script Manager opens file in IDE | Yes, socket | Yes, Eclipse-compatible loopback listener | Complete |
 | C/C++ symbol lookup | Yes, Eclipse CDT | Deferred | Later |
 | Gradle source/Javadoc integration without duplicate facet roots | N/A | Planned | Later |
@@ -170,6 +172,50 @@ IntelliJ Run
 -> project saved successfully
 -> process exits with code 0
 ```
+
+## Validated PyGhidra GUI and Java debugging workflow
+
+PyGhidra GUI launches through Ghidra's official launcher:
+
+```text
+<GHIDRA_INSTALL_DIR>/support/pyghidraRun
+```
+
+For Gradle Extension Projects on Linux, the IntelliJ launcher passes:
+
+```text
+-D binaryPath=build/classes/java/main:build/resources/main
+-D ghidra.external.modules=<extension-project-root>
+```
+
+This allows Ghidra to discover compiled Java classes and Gradle resources without creating
+an Eclipse-style `bin/main` directory.
+
+Java extension debugging under PyGhidra uses Ghidra's built-in JDWP support:
+
+```text
+PYGHIDRA_DEBUG=1
+```
+
+PyGhidra exposes a loopback-only JDWP listener at:
+
+```text
+127.0.0.1:18001
+```
+
+Validated workflow:
+
+```text
+Tools -> Prepare PyGhidra Java Debugging
+-> Run <Project> PyGhidra
+-> wait for Ghidra GUI startup
+-> Debug <Project> PyGhidra Attach
+-> enable extension in File -> Configure...
+-> IntelliJ Java breakpoints hit
+```
+
+Breakpoints in Ghidra UI callbacks pause Swing threads. Resume promptly with `F9` to avoid
+Ghidra worker timeouts while the UI thread is suspended.
 
 ## Validated extension template workflows
 

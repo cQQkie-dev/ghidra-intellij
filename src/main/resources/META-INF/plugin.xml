@@ -79,6 +79,13 @@
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
         <action
+                id="com.codingmates.ghidra.intellij.PreparePyGhidraJavaDebugging"
+                class="com.codingmates.ghidra.intellij.ide.action.PreparePyGhidraJavaDebuggingAction"
+                text="Prepare PyGhidra Java Debugging"
+                description="Prepare PyGhidra GUI and Remote JVM Debug configurations for Java extension debugging">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+        <action
                 id="com.codingmates.ghidra.intellij.GenerateGhidraGradleWrapper"
                 class="com.codingmates.ghidra.intellij.ide.action.GenerateGhidraGradleWrapperAction"
                 text="Generate Ghidra Gradle Wrapper"
