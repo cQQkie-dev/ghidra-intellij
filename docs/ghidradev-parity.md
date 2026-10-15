@@ -39,7 +39,7 @@
 | New Java Ghidra Script | Yes | Yes | Complete |
 | New Python Ghidra Script | Yes | PyGhidra and Jython templates | Complete |
 | Ghidra Module/Extension Project | Yes | Yes | Complete |
-| Official Skeleton templates | Yes | Empty, Plugin, Analyzer, Loader, File System, Exporter, Processor/SLEIGH | Complete; Plugin, Loader, File System, Exporter, and Processor workflows runtime-validated |
+| Official Skeleton templates | Yes | Empty, Plugin, Analyzer, Loader, File System, Exporter, Processor/SLEIGH | Complete; Plugin, Analyzer, Loader, File System, Exporter, and Processor workflows runtime-validated |
 | Automatic Gradle Wrapper generation | No | Yes, when configured Gradle is available | Complete |
 | Open/import generated Gradle project | No | Notification action opens in a new IntelliJ window | Complete |
 | Automatic generated-project facet setup | No | Full facet with classes, sources, Javadocs, and selected runtime | Complete |
@@ -255,6 +255,7 @@ through direct IntelliJ classpath debugging:
 | Template | Validated behavior |
 |---|---|
 | Plugin | Ghidra CodeBrowser discovers the plugin; constructor, `init()`, and action breakpoints hit; generated provider and toolbar action work |
+| Analyzer | Constructor, `canAnalyze()`, and `added()` breakpoints hit; analyzer appears as `My Analyzer` in Auto Analyze and completes successfully |
 | Loader | Loader recognition and `load()` breakpoints hit; Ghidra offers the custom loader and imports a matching test file |
 | File System | Probe, factory creation, mount, file listing, and byte-provider breakpoints hit; a mounted test file system exposes and imports a payload file |
 | Exporter | Ghidra offers the custom exporter; domain-object capability and export breakpoints hit; exporter writes the selected output file |
