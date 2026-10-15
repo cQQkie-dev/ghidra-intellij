@@ -16,7 +16,7 @@ import java.nio.file.Path
 class CreatePyGhidraGuiLauncherAction : DumbAwareAction(
     "Create PyGhidra GUI Launcher",
     "Create a PyGhidra GUI Run Configuration for the current project",
-    GhidraIcons.Ghidra,
+    GhidraIcons.PyGhidra,
 ) {
 
     override fun getActionUpdateThread(): ActionUpdateThread =

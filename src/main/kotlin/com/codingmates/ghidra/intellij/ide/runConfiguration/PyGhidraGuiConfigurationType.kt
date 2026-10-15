@@ -11,7 +11,7 @@ class PyGhidraGuiConfigurationType : ConfigurationTypeBase(
     "PyGhidraGuiConfiguration",
     "PyGhidra GUI",
     "Start Ghidra through its official PyGhidra launcher.",
-    GhidraIcons.Ghidra,
+    GhidraIcons.PyGhidra,
 ), ConfigurationType {
 
     init {

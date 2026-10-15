@@ -71,6 +71,13 @@
                 description="Create a PyGhidra GUI Run Configuration for the current project">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
+                <action
+                id="com.codingmates.ghidra.intellij.CreatePyGhidraJavaDebugAttach"
+                class="com.codingmates.ghidra.intellij.ide.action.CreatePyGhidraJavaDebugAttachAction"
+                text="Create PyGhidra Java Debug Attach"
+                description="Create a Remote JVM Debug configuration for PyGhidra Java extension debugging">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
         <action
                 id="com.codingmates.ghidra.intellij.GenerateGhidraGradleWrapper"
                 class="com.codingmates.ghidra.intellij.ide.action.GenerateGhidraGradleWrapperAction"
