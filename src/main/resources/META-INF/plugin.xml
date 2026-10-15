@@ -13,6 +13,8 @@
         <configurationType implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherConfigurationType"/>
         <programRunner id="Run" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherRunner"/>
         <programRunner id="Debug" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.GhidraLauncherDebugRunner"/>
+        <configurationType implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.PyGhidraGuiConfigurationType"/>
+        <programRunner id="PyGhidraGuiRun" implementation="com.codingmates.ghidra.intellij.ide.runConfiguration.PyGhidraGuiRunner"/>
         <facetType implementation="com.codingmates.ghidra.intellij.ide.facet.GhidraFacetType" />
         <applicationConfigurable
                 parentId="tools"
@@ -60,6 +62,13 @@
                 class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraDevelopmentLauncherAction"
                 text="Create Ghidra Development Launcher"
                 description="Create a Ghidra Launcher Run Configuration for the current project">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+                <action
+                id="com.codingmates.ghidra.intellij.CreatePyGhidraGuiLauncher"
+                class="com.codingmates.ghidra.intellij.ide.action.CreatePyGhidraGuiLauncherAction"
+                text="Create PyGhidra GUI Launcher"
+                description="Create a PyGhidra GUI Run Configuration for the current project">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
         <action
