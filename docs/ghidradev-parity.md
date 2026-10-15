@@ -53,7 +53,7 @@
 | Processor/SLEIGH language build | Yes | `Build SLEIGH Language` Ant action | Complete |
 | PyGhidra GUI launch | Yes | Official `pyghidraRun` GUI launcher with Gradle extension class/resource loading on Linux | Complete |
 | PyGhidra Java extension debugging | Yes | Manual JDWP attach workflow at `127.0.0.1:18001`; preparation action configures `PYGHIDRA_DEBUG=1` | Complete |
-| Native PyGhidra Python debugging | Yes | Planned; depends on optional IntelliJ Python plug-in integration | Later |
+| Native PyGhidra Python debugging | Yes | Optional IntelliJ Python Debug Server workflow through `pydevd_pycharm`; manually validated on Linux | Complete |
 | Script Manager opens file in IDE | Yes, socket | Yes, Eclipse-compatible loopback listener | Complete |
 | C/C++ symbol lookup | Yes, Eclipse CDT | Deferred | Later |
 | Gradle source/Javadoc integration without duplicate facet roots | N/A | Planned | Later |
@@ -216,6 +216,36 @@ Tools -> Prepare PyGhidra Java Debugging
 
 Breakpoints in Ghidra UI callbacks pause Swing threads. Resume promptly with `F9` to avoid
 Ghidra worker timeouts while the UI thread is suspended.
+
+Native PyGhidra Python script debugging is optional and requires IntelliJ Python support,
+including the Python DAP Debugger plug-in.
+
+The preparation action discovers IntelliJ's shipped PyDev helper dynamically from the
+enabled `PythonCore` plug-in and prepends its `helpers/pydev` directory to `PYTHONPATH`.
+
+Validated workflow:
+
+```text
+Tools -> Prepare PyGhidra Python Debugging
+-> Debug <Project> PyGhidra Python Debug Server
+-> Run <Project> PyGhidra
+-> run a PyGhidra script containing pydevd_pycharm.settrace(...)
+-> IntelliJ Python breakpoints hit
+```
+
+The plug-in does not automatically modify user scripts. Add a connection call such as:
+
+```python
+import pydevd_pycharm
+
+pydevd_pycharm.settrace(
+    "localhost",
+    port=5678,
+    stdout_to_server=True,
+    stderr_to_server=True,
+    suspend=True,
+)
+```
 
 ## Validated extension template workflows
 

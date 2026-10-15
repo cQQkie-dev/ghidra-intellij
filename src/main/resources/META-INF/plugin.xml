@@ -71,7 +71,7 @@
                 description="Create a PyGhidra GUI Run Configuration for the current project">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
-                <action
+        <action
                 id="com.codingmates.ghidra.intellij.CreatePyGhidraJavaDebugAttach"
                 class="com.codingmates.ghidra.intellij.ide.action.CreatePyGhidraJavaDebugAttachAction"
                 text="Create PyGhidra Java Debug Attach"
@@ -83,6 +83,13 @@
                 class="com.codingmates.ghidra.intellij.ide.action.PreparePyGhidraJavaDebuggingAction"
                 text="Prepare PyGhidra Java Debugging"
                 description="Prepare PyGhidra GUI and Remote JVM Debug configurations for Java extension debugging">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+        <action
+                id="com.codingmates.ghidra.intellij.PreparePyGhidraPythonDebugging"
+                class="com.codingmates.ghidra.intellij.ide.action.PreparePyGhidraPythonDebuggingAction"
+                text="Prepare PyGhidra Python Debugging"
+                description="Prepare PyGhidra and IntelliJ Python Debug Server configurations">
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
         <action
