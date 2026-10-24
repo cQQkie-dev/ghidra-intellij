@@ -1,6 +1,8 @@
 package com.codingmates.ghidra.intellij.ide.runConfiguration
 
+
 import com.codingmates.ghidra.intellij.ide.facet.GhidraFacet
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationDiscovery
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationException
 import com.codingmates.ghidra.intellij.ide.installation.GhidraLaunchPropertiesParser
 import com.codingmates.ghidra.intellij.ide.installation.GhidraPlatform
@@ -10,6 +12,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.JavaParametersUtil
 import java.nio.file.Path
+import java.util.zip.ZipFile
 import org.jetbrains.annotations.NotNull
 
 
@@ -27,7 +30,7 @@ class GhidraLauncherCommandLineState(
         }
 
         javaParameters.jdk = JavaParametersUtil.createProjectJdk(project, jrePath)
-        javaParameters.mainClass = "ghidra.GhidraLauncher"
+        javaParameters.mainClass = "ghidra.Ghidra"
         if (configuration.getHeadless()) {
             javaParameters.programParametersList.add("ghidra.app.util.headless.AnalyzeHeadless")
         } else {
@@ -49,6 +52,11 @@ class GhidraLauncherCommandLineState(
 
             javaParameters.vmParametersList.addAll(
                 launchProperties.vmArgumentsFor(GhidraPlatform.current())
+            )
+
+            addRuntimeCompatibilityVmArguments(
+                javaParameters = javaParameters,
+                installationPath = installationPath,
             )
         }
         catch (e: GhidraInstallationException) {
@@ -82,5 +90,55 @@ class GhidraLauncherCommandLineState(
             )
         }
         return javaParameters
+    }
+
+    /**
+     * Adds JVM options required by Ghidra runtime capabilities but not represented in
+     * support/launch.properties.
+     *
+     * Ghidra releases that provide the serial-filter factory configure it during application
+     * initialization. Some supported JDKs establish their default factory too early unless
+     * Ghidra's factory is supplied as a startup JVM property.
+     *
+     * The check is installation-layout based rather than tied to a hardcoded Ghidra version, so
+     * runtimes without the factory remain unaffected.
+     */
+    private fun addRuntimeCompatibilityVmArguments(
+        javaParameters: JavaParameters,
+        installationPath: String,
+    ) {
+        val installation = GhidraInstallationDiscovery.discover(
+            Path.of(installationPath)
+        )
+
+        val fileSystemJar = installation.canonicalPath.resolve(
+            "Ghidra/Framework/FileSystem/lib/FileSystem.jar"
+        )
+
+        val serialFilterFactoryClass =
+            "ghidra/framework/remote/GhidraSerialFilterFactory.class"
+
+        val supportsSerialFilterFactory =
+            ZipFile(fileSystemJar.toFile()).use { archive ->
+                archive.getEntry(serialFilterFactoryClass) != null
+            }
+
+        if (!supportsSerialFilterFactory) {
+            return
+        }
+
+        val serialFilterFactoryArgument =
+            "-Djdk.serialFilterFactory=" +
+                "ghidra.framework.remote.GhidraSerialFilterFactory"
+
+        if (
+            javaParameters.vmParametersList.parameters.none {
+                it.startsWith("-Djdk.serialFilterFactory=")
+            }
+        ) {
+            javaParameters.vmParametersList.add(
+                serialFilterFactoryArgument
+            )
+        }
     }
 }
