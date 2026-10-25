@@ -11,6 +11,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JCheckBox
 import javax.swing.JTextField
@@ -18,10 +19,14 @@ import javax.swing.JTextField
 class CreateGhidraScriptProjectDialog(
     project: Project?,
     private val defaultParentDirectory: Path,
+    targetInstallations: List<Path>,
+    defaultInstallation: Path?,
 ) : DialogWrapper(project, true) {
 
     private val projectNameField = JTextField()
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
+    private val targetInstallationComboBox =
+        JComboBox(targetInstallations.map(Path::toString).toTypedArray())
     private val sharedUserScriptDirectoryCheckbox = JCheckBox(
         "Use shared user script directory: ${
             Path.of(System.getProperty("user.home"), "ghidra_scripts")
@@ -31,6 +36,9 @@ class CreateGhidraScriptProjectDialog(
 
     init {
         title = "Create Ghidra Script Project"
+        defaultInstallation?.toString()?.let { defaultPath ->
+            targetInstallationComboBox.selectedItem = defaultPath
+        }
         init()
         initValidation()
 
@@ -44,11 +52,11 @@ class CreateGhidraScriptProjectDialog(
         parentDirectoryField.document.addDocumentListener(validationListener)
     }
 
-    fun projectSpec(ghidraInstallationPath: Path): GhidraScriptProjectSpec =
+    fun projectSpec(): GhidraScriptProjectSpec =
         GhidraScriptProjectSpec(
             name = projectNameField.text.trim(),
             projectParentDirectory = Path.of(parentDirectoryField.text.trim()),
-            ghidraInstallationPath = ghidraInstallationPath,
+            ghidraInstallationPath = targetInstallationPath(),
             sharedScriptDirectory =
                 if (sharedUserScriptDirectoryCheckbox.isSelected) {
                     Path.of(System.getProperty("user.home"), "ghidra_scripts")
@@ -57,6 +65,9 @@ class CreateGhidraScriptProjectDialog(
                     null
                 },
         )
+
+    fun targetInstallationPath(): Path =
+        Path.of(targetInstallationComboBox.selectedItem as String)
 
     private fun revalidateDialog() {
         initValidation()
@@ -82,6 +93,11 @@ class CreateGhidraScriptProjectDialog(
                     parentDirectoryField.text = selectedDirectory.path
                 }
             }
+        }
+
+        row("Target Ghidra installation:") {
+            cell(targetInstallationComboBox)
+                .align(AlignX.FILL)
         }
 
         row {

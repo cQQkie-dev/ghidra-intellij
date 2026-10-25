@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JCheckBox
 import javax.swing.BoxLayout
@@ -21,10 +22,13 @@ import javax.swing.event.DocumentListener
 class CreateGhidraExtensionProjectDialog(
     project: Project?,
     private val defaultParentDirectory: Path,
+    targetInstallations: List<Path>,
+    defaultInstallation: Path?,
 ) : DialogWrapper(project, true) {
 
     private val projectNameField = JTextField()
     private val parentDirectoryField = JTextField(defaultParentDirectory.toString())
+    private val targetInstallationComboBox = JComboBox(targetInstallations.map(Path::toString).toTypedArray())
     private val pluginTemplateCheckbox = JCheckBox("Plugin - extends the Ghidra user interface")
     private val analyzerTemplateCheckbox = JCheckBox("Analyzer - extends Ghidra analysis")
     private val loaderTemplateCheckbox = JCheckBox("Loader - imports a binary file format")
@@ -48,6 +52,9 @@ class CreateGhidraExtensionProjectDialog(
 
     init {
         title = "Create Ghidra Extension Project"
+        defaultInstallation?.toString()?.let { defaultPath ->
+            targetInstallationComboBox.selectedItem = defaultPath
+        }
         init()
         initValidation()
 
@@ -63,15 +70,17 @@ class CreateGhidraExtensionProjectDialog(
 
     fun projectSpec(
         skeletonTemplatePath: Path,
-        ghidraInstallationPath: Path,
     ): GhidraExtensionProjectSpec =
         GhidraExtensionProjectSpec(
             name = projectNameField.text.trim(),
             projectParentDirectory = Path.of(parentDirectoryField.text.trim()),
             skeletonTemplatePath = skeletonTemplatePath,
-            ghidraInstallationPath = ghidraInstallationPath,
+            ghidraInstallationPath = targetInstallationPath(),
             templates = selectedTemplates(),
         )
+
+    fun targetInstallationPath(): Path =
+        Path.of(targetInstallationComboBox.selectedItem as String)
 
     private fun selectedTemplates(): Set<GhidraExtensionTemplate> =
         buildSet {
@@ -124,6 +133,11 @@ class CreateGhidraExtensionProjectDialog(
                     parentDirectoryField.text = selectedDirectory.path
                 }
             }
+        }
+
+        row("Target Ghidra installation:") {
+            cell(targetInstallationComboBox)
+                .align(AlignX.FILL)
         }
 
         row("Templates:") {
