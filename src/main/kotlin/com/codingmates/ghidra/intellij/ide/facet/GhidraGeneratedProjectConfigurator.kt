@@ -1,5 +1,6 @@
 package com.codingmates.ghidra.intellij.ide.facet
 
+import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallation
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectInstallationDiscovery
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
@@ -34,6 +35,37 @@ object GhidraGeneratedProjectConfigurator {
             ?.normalize()
             ?: return null
 
+        val configuredInstallationPath =
+            GhidraProjectInstallationDiscovery.discover(projectRoot)
+                ?: return null
+
+        val installationRegistry = ApplicationManager.getApplication()
+            .getService(GhidraInstallationRegistryService::class.java)
+
+        val installation = installationRegistry.register(configuredInstallationPath)
+
+        return configure(
+            project = project,
+            installation = installation,
+        )
+    }
+
+    /**
+     * Configures the generated project's primary module for an already selected installation.
+     *
+     * This is used by target migration after the local Gradle target has been written. It avoids
+     * rediscovering the selected target through potentially stale project state.
+     */
+    fun configure(
+        project: Project,
+        installation: GhidraInstallation,
+    ): GhidraProjectKind? {
+        val projectRoot = project.basePath
+            ?.let(Path::of)
+            ?.toAbsolutePath()
+            ?.normalize()
+            ?: return null
+
         val layout = GhidraProjectLayoutDiscovery.discover(projectRoot)
         if (
             layout.kind != GhidraProjectKind.EXTENSION &&
@@ -42,19 +74,11 @@ object GhidraGeneratedProjectConfigurator {
             return null
         }
 
-        val configuredInstallationPath =
-            GhidraProjectInstallationDiscovery.discover(projectRoot)
-                ?: return null
-
         val module = findProjectModule(
             project = project,
             projectRoot = projectRoot,
         ) ?: return null
 
-        val installationRegistry = ApplicationManager.getApplication()
-            .getService(GhidraInstallationRegistryService::class.java)
-
-        val installation = installationRegistry.register(configuredInstallationPath)
         val facet = findOrCreateFacet(module)
 
         GhidraFacetConfigurator.configure(

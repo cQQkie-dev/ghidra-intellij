@@ -59,6 +59,13 @@
             <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
         <action
+                id="com.codingmates.ghidra.intellij.MigrateGhidraProjectTarget"
+                class="com.codingmates.ghidra.intellij.ide.action.MigrateGhidraProjectTargetAction"
+                text="Migrate Ghidra Project Target"
+                description="Change the Ghidra runtime target for the current extension project">
+            <add-to-group group-id="ToolsMenu" anchor="first" />
+        </action>
+        <action
                 id="com.codingmates.ghidra.intellij.CreateGhidraDevelopmentLauncher"
                 class="com.codingmates.ghidra.intellij.ide.action.CreateGhidraDevelopmentLauncherAction"
                 text="Create Ghidra Development Launcher"
