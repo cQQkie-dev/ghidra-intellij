@@ -6,10 +6,21 @@ import com.intellij.execution.process.ProcessOutput
 
 object GhidraGradleCommandRunner {
 
+    private const val GHIDRA_INSTALL_DIR = "GHIDRA_INSTALL_DIR"
+
     fun run(command: GhidraGradleCommand): ProcessOutput =
         CapturingProcessHandler(createCommandLine(command)).runProcess()
 
-    private fun createCommandLine(command: GhidraGradleCommand): GeneralCommandLine {
+    internal fun sanitizedEnvironment(
+        parentEnvironment: Map<String, String>,
+    ): Map<String, String> =
+        parentEnvironment.filterKeys { key ->
+            key != GHIDRA_INSTALL_DIR
+        }
+
+    private fun createCommandLine(
+        command: GhidraGradleCommand,
+    ): GeneralCommandLine {
         val commandLine = if (
             System.getProperty("os.name").startsWith("Windows", true)
         ) {
@@ -22,5 +33,11 @@ object GhidraGradleCommandRunner {
         return commandLine
             .withParameters(command.arguments)
             .withWorkDirectory(command.workingDirectory.toFile())
+            .withParentEnvironmentType(
+                GeneralCommandLine.ParentEnvironmentType.NONE
+            )
+            .withEnvironment(
+                sanitizedEnvironment(System.getenv())
+            )
     }
 }
