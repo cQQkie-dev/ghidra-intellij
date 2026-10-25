@@ -1,0 +1,70 @@
+package com.codingmates.ghidra.intellij.ide.migration
+
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.Properties
+
+/**
+ * Reads the Gradle version configured by a project Gradle Wrapper.
+ */
+object GhidraGradleWrapperDiscovery {
+
+    private const val DISTRIBUTION_URL_PROPERTY = "distributionUrl"
+
+    fun discover(projectRoot: Path): GhidraGradleVersion? {
+        val normalizedProjectRoot = projectRoot.toAbsolutePath().normalize()
+
+        return discoverFromPropertiesFile(
+            normalizedProjectRoot.resolve(
+                "gradle/wrapper/gradle-wrapper.properties"
+            )
+        )
+    }
+
+    fun discoverFromPropertiesFile(
+        wrapperPropertiesFile: Path,
+    ): GhidraGradleVersion? {
+        if (!Files.isRegularFile(wrapperPropertiesFile)) {
+            return null
+        }
+
+        val properties = Properties()
+
+        try {
+            Files.newInputStream(wrapperPropertiesFile).use(properties::load)
+        }
+        catch (_: IOException) {
+            return null
+        }
+        catch (_: IllegalArgumentException) {
+            return null
+        }
+
+        val distributionUrl = properties
+            .getProperty(DISTRIBUTION_URL_PROPERTY)
+            ?.trim()
+            ?.takeIf(String::isNotEmpty)
+            ?: return null
+
+        return GhidraGradleVersion.parseOrNull(
+            versionFromDistributionUrl(distributionUrl)
+        )
+    }
+
+    private fun versionFromDistributionUrl(
+        distributionUrl: String,
+    ): String? {
+        val fileName = distributionUrl
+            .substringAfterLast('/')
+            .substringBefore('?')
+            .substringBefore('#')
+
+        val match = Regex(
+            """^gradle-(\d+(?:\.\d+)*)(?:-(?:bin|all))?\.zip$"""
+        ).matchEntire(fileName)
+            ?: return null
+
+        return match.groupValues[1]
+    }
+}

@@ -4,8 +4,8 @@ import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationDiscov
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectInstallationDiscovery
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLayoutDiscovery
+import com.codingmates.ghidra.intellij.ide.project.GhidraProjectLocalTargetConfiguration
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.toList
@@ -60,8 +60,6 @@ class GhidraExtensionSourceImportException(
  */
 object GhidraExtensionSourceImporter {
 
-    private const val GHIDRA_INSTALL_DIR = "GHIDRA_INSTALL_DIR"
-
     @Throws(GhidraExtensionSourceImportException::class)
     fun inspect(projectDirectory: Path): GhidraExtensionSourceProject {
         val normalizedProjectDirectory =
@@ -112,30 +110,11 @@ object GhidraExtensionSourceImporter {
         val normalizedInstallationPath =
             ghidraInstallationPath.toAbsolutePath().normalize()
 
-        val propertiesFile =
-            sourceProject.projectDirectory.resolve("gradle.properties")
-
         try {
-            val existingContent = if (Files.isRegularFile(propertiesFile)) {
-                Files.readString(propertiesFile, StandardCharsets.UTF_8)
-            }
-            else {
-                ""
-            }
-
-            Files.writeString(
-                propertiesFile,
-                upsertProperty(
-                    content = existingContent,
-                    key = GHIDRA_INSTALL_DIR,
-                    value = normalizedInstallationPath.toString(),
-                ),
-                StandardCharsets.UTF_8,
+            return GhidraProjectLocalTargetConfiguration.writeInstallation(
+                projectRoot = sourceProject.projectDirectory,
+                ghidraInstallationPath = normalizedInstallationPath,
             )
-
-            ensureGradlePropertiesIgnored(sourceProject.projectDirectory)
-
-            return propertiesFile
         }
         catch (e: IOException) {
             throw GhidraExtensionSourceImportException(
@@ -177,69 +156,5 @@ object GhidraExtensionSourceImporter {
         catch (_: IOException) {
             emptySet()
         }
-    }
-
-    private fun upsertProperty(
-        content: String,
-        key: String,
-        value: String,
-    ): String {
-        val propertyLine = "$key=$value"
-        val propertyPattern = Regex(
-            """(?m)^[\t ]*${Regex.escape(key)}[\t ]*=.*$"""
-        )
-
-        if (propertyPattern.containsMatchIn(content)) {
-            return propertyPattern.replace(content, propertyLine)
-        }
-
-        val separator = when {
-            content.isEmpty() -> ""
-            content.endsWith("\n") -> ""
-            else -> "\n"
-        }
-
-        return content + separator + propertyLine + "\n"
-    }
-
-    @Throws(IOException::class)
-    private fun ensureGradlePropertiesIgnored(
-        projectDirectory: Path,
-    ) {
-        val gitIgnoreFile = projectDirectory.resolve(".gitignore")
-
-        val existingContent = if (Files.isRegularFile(gitIgnoreFile)) {
-            Files.readString(gitIgnoreFile, StandardCharsets.UTF_8)
-        }
-        else {
-            ""
-        }
-
-        val alreadyIgnored = existingContent
-            .lineSequence()
-            .map(String::trim)
-            .any { line ->
-                line == "gradle.properties" ||
-                    line == "/gradle.properties"
-            }
-
-        if (alreadyIgnored) {
-            return
-        }
-
-        val separator = when {
-            existingContent.isEmpty() -> ""
-            existingContent.endsWith("\n") -> "\n"
-            else -> "\n\n"
-        }
-
-        Files.writeString(
-            gitIgnoreFile,
-            existingContent +
-                separator +
-                "# Local Ghidra target configuration\n" +
-                "gradle.properties\n",
-            StandardCharsets.UTF_8,
-        )
     }
 }
