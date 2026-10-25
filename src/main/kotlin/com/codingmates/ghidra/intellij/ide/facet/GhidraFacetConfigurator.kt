@@ -3,6 +3,7 @@ package com.codingmates.ghidra.intellij.ide.facet
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallation
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -104,6 +105,63 @@ object GhidraFacetConfigurator {
 
                 addLibraryEntry(ghidraLibrary)
             }.commit()
+
+            removeUnusedGhidraProjectLibraries(
+                project = project,
+                libraryTable = libraryTable,
+                retainedLibrary = ghidraLibrary,
+            )
+        }
+    }
+
+    /**
+     * Removes stale project-level Ghidra libraries after a facet target change.
+     *
+     * A library is removed only when no loaded project module references it. This keeps
+     * independently configured modules intact while cleaning old Ghidra installations left by
+     * target migration in ordinary single-root extension projects.
+     */
+    private fun removeUnusedGhidraProjectLibraries(
+        project: Project,
+        libraryTable: com.intellij.openapi.roots.libraries.LibraryTable,
+        retainedLibrary: com.intellij.openapi.roots.libraries.Library,
+    ) {
+        val referencedLibraries = ModuleManager.getInstance(project)
+            .modules
+            .asSequence()
+            .flatMap { projectModule ->
+                ModuleRootManager.getInstance(projectModule)
+                    .orderEntries
+                    .asSequence()
+            }
+            .filterIsInstance<LibraryOrderEntry>()
+            .mapNotNull(LibraryOrderEntry::getLibrary)
+            .filter { library ->
+                library.table == libraryTable
+            }
+            .toSet()
+
+        val staleLibraries = libraryTable.libraries
+            .asSequence()
+            .filter { library ->
+                val name = library.name
+
+                name == "Ghidra" ||
+                    name?.startsWith("Ghidra ") == true
+            }
+            .filter { library ->
+                library != retainedLibrary &&
+                    library !in referencedLibraries
+            }
+            .toList()
+
+        if (staleLibraries.isEmpty()) {
+            return
+        }
+
+        libraryTable.modifiableModel.apply {
+            staleLibraries.forEach(::removeLibrary)
+            commit()
         }
     }
 }
