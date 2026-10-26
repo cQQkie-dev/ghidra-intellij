@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import java.awt.Dimension
 import java.nio.file.Path
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JComponent
@@ -49,6 +50,20 @@ class MigrateGhidraProjectTargetDialog(
             "from using the selected project target."
     )
 
+    private val compatibleSdkComboBox = JComboBox<GhidraCompatibleSdk>()
+
+    private val updateProjectSdkCheckBox = JCheckBox(
+        "Set Project SDK to selected compatible Java SDK"
+    )
+
+    private val updateGradleJvmCheckBox = JCheckBox(
+        "Set linked Gradle JVM to selected compatible Java SDK"
+    )
+
+    private val updateLauncherJreCheckBox = JCheckBox(
+        "Set explicit Ghidra Launcher JRE to selected compatible Java SDK"
+    )
+
     private var currentPlan: GhidraTargetMigrationPlan =
         planForSelectedInstallation()
 
@@ -65,10 +80,12 @@ class MigrateGhidraProjectTargetDialog(
             }
 
         updatePlan()
+        updateCompatibleSdkOptions()
 
         targetInstallationComboBox.addActionListener {
             acknowledgementCheckBox.isSelected = false
             updatePlan()
+            updateCompatibleSdkOptions()
         }
 
         init()
@@ -82,6 +99,18 @@ class MigrateGhidraProjectTargetDialog(
 
     fun selectedPlan(): GhidraTargetMigrationPlan =
         currentPlan
+
+    fun selectedCompatibleSdk(): GhidraCompatibleSdk? =
+        compatibleSdkComboBox.selectedItem as? GhidraCompatibleSdk
+
+    fun shouldUpdateProjectSdk(): Boolean =
+        updateProjectSdkCheckBox.isSelected
+
+    fun shouldUpdateGradleJvm(): Boolean =
+        updateGradleJvmCheckBox.isSelected
+
+    fun shouldUpdateLauncherJre(): Boolean =
+        updateLauncherJreCheckBox.isSelected
 
     private fun planForSelectedInstallation(): GhidraTargetMigrationPlan =
         GhidraTargetMigrationPlanner.plan(
@@ -118,7 +147,105 @@ class MigrateGhidraProjectTargetDialog(
             cell(acknowledgementCheckBox)
                 .align(AlignX.FILL)
         }
+
+        group("Optional Java Configuration Updates") {
+            row("Compatible Java SDK:") {
+                cell(compatibleSdkComboBox)
+                    .align(AlignX.FILL)
+            }
+
+            row {
+                cell(updateProjectSdkCheckBox)
+                    .align(AlignX.FILL)
+            }
+
+            row {
+                cell(updateGradleJvmCheckBox)
+                    .align(AlignX.FILL)
+            }
+
+            row {
+                cell(updateLauncherJreCheckBox)
+                    .align(AlignX.FILL)
+            }
+        }
     }
+
+    private fun updateCompatibleSdkOptions() {
+        val compatibleSdks = GhidraCompatibleSdkDiscovery.discover(
+            currentPlan.requirements
+        )
+
+        compatibleSdkComboBox.model = DefaultComboBoxModel(
+            compatibleSdks.toTypedArray()
+        )
+
+        val hasCompatibleSdk = compatibleSdks.isNotEmpty()
+
+        compatibleSdkComboBox.isEnabled = hasCompatibleSdk
+
+        updateProjectSdkCheckBox.isVisible =
+            hasCompatibleSdk &&
+                hasIssue(
+                    GhidraTargetMigrationIssueCode.PROJECT_SDK_UNAVAILABLE,
+                    GhidraTargetMigrationIssueCode.PROJECT_SDK_INCOMPATIBLE,
+                )
+
+        updateGradleJvmCheckBox.isVisible =
+            hasCompatibleSdk &&
+                hasCompatibleGradleWrapper() &&
+                hasIssue(
+                    GhidraTargetMigrationIssueCode.GRADLE_JVM_UNAVAILABLE,
+                    GhidraTargetMigrationIssueCode.GRADLE_JVM_INCOMPATIBLE,
+                )
+
+        updateLauncherJreCheckBox.isVisible =
+            hasCompatibleSdk &&
+                hasIssue(
+                    GhidraTargetMigrationIssueCode
+                        .EXPLICIT_LAUNCHER_JRE_UNAVAILABLE,
+                    GhidraTargetMigrationIssueCode
+                        .EXPLICIT_LAUNCHER_JRE_INCOMPATIBLE,
+                )
+
+        if (!hasCompatibleSdk) {
+            updateProjectSdkCheckBox.isSelected = false
+            updateGradleJvmCheckBox.isSelected = false
+            updateLauncherJreCheckBox.isSelected = false
+        }
+        else {
+            updateProjectSdkCheckBox.isSelected =
+                updateProjectSdkCheckBox.isVisible
+
+            updateGradleJvmCheckBox.isSelected =
+                updateGradleJvmCheckBox.isVisible
+
+            updateLauncherJreCheckBox.isSelected =
+                updateLauncherJreCheckBox.isVisible
+        }
+    }
+
+    /**
+     * Gradle versions below the selected Ghidra minimum may not support the target Java version.
+     * For example, Gradle 8.13 cannot run on Java 25. Do not offer a Gradle JVM upgrade until the
+     * project's Wrapper is within the selected Ghidra Gradle compatibility range.
+     */
+    private fun hasCompatibleGradleWrapper(): Boolean =
+        currentPlan.issues.none { issue ->
+            issue.code in setOf(
+                GhidraTargetMigrationIssueCode.WRAPPER_NOT_FOUND,
+                GhidraTargetMigrationIssueCode.WRAPPER_VERSION_UNAVAILABLE,
+                GhidraTargetMigrationIssueCode.WRAPPER_GRADLE_TOO_OLD,
+                GhidraTargetMigrationIssueCode.WRAPPER_GRADLE_TOO_NEW,
+            )
+        }
+
+    private fun hasIssue(
+        vararg issueCodes: GhidraTargetMigrationIssueCode,
+    ): Boolean =
+        currentPlan.issues.any { issue ->
+            issue.code in issueCodes
+        }
 
     override fun doValidate(): ValidationInfo? {
         if (
@@ -128,6 +255,18 @@ class MigrateGhidraProjectTargetDialog(
             return ValidationInfo(
                 "Acknowledge the global target override before migrating.",
                 acknowledgementCheckBox,
+            )
+        }
+
+        if (
+            (updateProjectSdkCheckBox.isSelected ||
+                updateGradleJvmCheckBox.isSelected ||
+                updateLauncherJreCheckBox.isSelected) &&
+            selectedCompatibleSdk() == null
+        ) {
+            return ValidationInfo(
+                "Select a compatible Java SDK before applying Java configuration updates.",
+                compatibleSdkComboBox,
             )
         }
 
@@ -179,10 +318,10 @@ class MigrateGhidraProjectTargetDialog(
         }
 
         append(
-            "\nThis workflow updates only the local Ghidra target, Ghidra facet, " +
-                "and Processor/SLEIGH Ant target where applicable. It does not migrate " +
-                "Ghidra APIs, source code, dependencies, SDKs, Gradle JVM settings, " +
-                "or Gradle Wrapper versions."
+            "\nThis workflow updates the local Ghidra target, Ghidra facet, " +
+                "Processor/SLEIGH Ant target where applicable, and explicitly selected " +
+                "Java SDK settings. It does not migrate Ghidra APIs, source code, " +
+                "dependencies, Gradle Wrapper versions, or Gradle build logic."
         )
     }
 }

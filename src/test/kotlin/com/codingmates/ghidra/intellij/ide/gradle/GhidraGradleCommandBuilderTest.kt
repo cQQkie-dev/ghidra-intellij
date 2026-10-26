@@ -1,6 +1,7 @@
 package com.codingmates.ghidra.intellij.ide.gradle
 
 import com.codingmates.ghidra.intellij.ide.installation.GhidraPlatform
+import com.codingmates.ghidra.intellij.ide.migration.GhidraGradleVersion
 import java.nio.file.Files
 import kotlin.io.path.writeText
 import kotlin.test.Test
@@ -103,6 +104,40 @@ class GhidraGradleCommandBuilderTest {
         )
         assertEquals(
             listOf("wrapper"),
+            command.arguments,
+        )
+        assertEquals(
+            projectRoot.toAbsolutePath().normalize(),
+            command.workingDirectory,
+        )
+        assertFalse(command.usesWrapper)
+    }
+
+    @Test
+    fun `builds controlled Gradle Wrapper update command`() {
+        val projectRoot = Files.createTempDirectory("ghidra-project")
+        val ghidraInstallation = Files.createTempDirectory("ghidra-installation")
+        val gradleExecutable = Files.createTempFile("gradle", ".bin")
+
+        val command = GhidraGradleCommandBuilder.updateWrapper(
+            projectRoot = projectRoot,
+            ghidraInstallationPath = ghidraInstallation,
+            gradleExecutablePath = gradleExecutable,
+            targetGradleVersion = GhidraGradleVersion.parseOrNull("9.1")!!,
+        )
+
+        assertEquals(
+            gradleExecutable.toAbsolutePath().normalize().toString(),
+            command.executable,
+        )
+        assertEquals(
+            listOf(
+                "-PGHIDRA_INSTALL_DIR=${
+                    ghidraInstallation.toAbsolutePath().normalize()
+                }",
+                "wrapper",
+                "--gradle-version=9.1",
+            ),
             command.arguments,
         )
         assertEquals(

@@ -58,7 +58,7 @@ data class GhidraTargetRequirements(
         }
 
         val maximumVersion = gradleMaximumVersion
-        if (maximumVersion != null && version > maximumVersion) {
+        if (maximumVersion != null && version >= maximumVersion) {
             return false
         }
 

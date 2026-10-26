@@ -1,6 +1,7 @@
 package com.codingmates.ghidra.intellij.ide.gradle
 
 import com.codingmates.ghidra.intellij.ide.installation.GhidraPlatform
+import com.codingmates.ghidra.intellij.ide.migration.GhidraGradleVersion
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -58,6 +59,41 @@ object GhidraGradleCommandBuilder {
         return GhidraGradleCommand(
             executable = normalizedGradleExecutablePath.toString(),
             arguments = listOf(WRAPPER_TASK),
+            workingDirectory = normalizedProjectRoot,
+            usesWrapper = false,
+        )
+    }
+
+    /**
+     * Builds a command that updates a project's Gradle Wrapper to [targetGradleVersion].
+     *
+     * The configured Gradle executable, rather than the existing project wrapper, performs the
+     * update. This is required when the existing wrapper is too old to run on the selected
+     * Ghidra target's Java version.
+     */
+    fun updateWrapper(
+        projectRoot: Path,
+        ghidraInstallationPath: Path,
+        gradleExecutablePath: Path,
+        targetGradleVersion: GhidraGradleVersion,
+    ): GhidraGradleCommand {
+        val normalizedProjectRoot = projectRoot.toAbsolutePath().normalize()
+        val normalizedGradleExecutablePath =
+            gradleExecutablePath.toAbsolutePath().normalize()
+
+        require(Files.isRegularFile(normalizedGradleExecutablePath)) {
+            "Gradle executable does not exist: $normalizedGradleExecutablePath"
+        }
+
+        return GhidraGradleCommand(
+            executable = normalizedGradleExecutablePath.toString(),
+            arguments = listOf(
+                "-PGHIDRA_INSTALL_DIR=${
+                    ghidraInstallationPath.toAbsolutePath().normalize()
+                }",
+                WRAPPER_TASK,
+                "--gradle-version=$targetGradleVersion",
+            ),
             workingDirectory = normalizedProjectRoot,
             usesWrapper = false,
         )

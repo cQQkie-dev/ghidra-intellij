@@ -262,14 +262,14 @@ object GhidraTargetMigrationPlanner {
         }
 
         val maximumVersion = requirements.gradleMaximumVersion
-        if (maximumVersion != null && wrapperVersion > maximumVersion) {
+        if (maximumVersion != null && wrapperVersion >= maximumVersion) {
             add(
                 GhidraTargetMigrationIssue(
                     code = GhidraTargetMigrationIssueCode.WRAPPER_GRADLE_TOO_NEW,
                     severity = GhidraTargetMigrationIssueSeverity.WARNING,
                     message =
-                        "Gradle Wrapper $wrapperVersion is newer than the selected Ghidra " +
-                            "maximum Gradle version $maximumVersion.",
+                        "Gradle Wrapper $wrapperVersion is at or newer than the selected " +
+                            "Ghidra maximum Gradle version $maximumVersion.",
                 )
             )
         }

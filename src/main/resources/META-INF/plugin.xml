@@ -108,6 +108,13 @@
             <add-to-group group-id="ToolsMenu" anchor="last" />
         </action>
         <action
+                id="com.codingmates.ghidra.intellij.UpdateGhidraGradleWrapper"
+                class="com.codingmates.ghidra.intellij.ide.action.UpdateGhidraGradleWrapperAction"
+                text="Update Ghidra Gradle Wrapper"
+                description="Update the Gradle Wrapper for the current Ghidra extension target">
+            <add-to-group group-id="ToolsMenu" anchor="last" />
+        </action>
+        <action
                 id="com.codingmates.ghidra.intellij.BuildGhidraSleighLanguage"
                 class="com.codingmates.ghidra.intellij.ide.action.BuildGhidraSleighLanguageAction"
                 text="Build SLEIGH Language"

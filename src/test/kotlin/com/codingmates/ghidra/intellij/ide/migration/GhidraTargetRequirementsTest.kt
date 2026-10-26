@@ -80,12 +80,12 @@ class GhidraTargetRequirementsTest {
 
         assertTrue(
             requirements.isGradleCompatible(
-                GhidraGradleVersion.parseOrNull("9.6")
+                GhidraGradleVersion.parseOrNull("9.5")
             )
         )
         assertFalse(
             requirements.isGradleCompatible(
-                GhidraGradleVersion.parseOrNull("9.7")
+                GhidraGradleVersion.parseOrNull("9.6")
             )
         )
     }

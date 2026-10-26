@@ -5,6 +5,7 @@ import com.codingmates.ghidra.intellij.ide.facet.GhidraGeneratedProjectConfigura
 import com.codingmates.ghidra.intellij.ide.icons.GhidraIcons
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallation
 import com.codingmates.ghidra.intellij.ide.installation.GhidraInstallationRegistryService
+import com.codingmates.ghidra.intellij.ide.migration.GhidraProjectJavaConfigurationUpdater
 import com.codingmates.ghidra.intellij.ide.migration.GhidraProjectTargetSnapshotCollector
 import com.codingmates.ghidra.intellij.ide.migration.MigrateGhidraProjectTargetDialog
 import com.codingmates.ghidra.intellij.ide.project.GhidraProjectKind
@@ -135,12 +136,30 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
             val launcherResult =
                 GhidraDevelopmentLauncherConfigurator.ensure(project)
 
+            val javaConfigurationResult = dialog.selectedCompatibleSdk()
+                ?.takeIf {
+                    dialog.shouldUpdateProjectSdk() ||
+                        dialog.shouldUpdateGradleJvm() ||
+                        dialog.shouldUpdateLauncherJre()
+                }
+                ?.let { compatibleSdk ->
+                    GhidraProjectJavaConfigurationUpdater.apply(
+                        project = project,
+                        compatibleSdk = compatibleSdk,
+                        updateProjectSdk = dialog.shouldUpdateProjectSdk(),
+                        updateGradleJvm = dialog.shouldUpdateGradleJvm(),
+                        updateExplicitLauncherJre =
+                            dialog.shouldUpdateLauncherJre(),
+                    )
+                }
+
             notifyMigrationCompleted(
                 project = project,
                 installation = selectedInstallation,
                 propertiesFile = propertiesFile,
                 sleighPropertiesFile = sleighPropertiesFile,
                 launcherCreated = launcherResult.created,
+                javaConfigurationResult = javaConfigurationResult,
             )
         }
         catch (e: Exception) {
@@ -209,6 +228,9 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
         propertiesFile: Path,
         sleighPropertiesFile: Path?,
         launcherCreated: Boolean,
+        javaConfigurationResult:
+            com.codingmates.ghidra.intellij.ide.migration
+                .GhidraProjectJavaConfigurationUpdateResult?,
     ) {
         val content = buildString {
             append(
@@ -244,11 +266,33 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
                 }
             )
 
+            javaConfigurationResult?.let { result ->
+                val updatedItems = buildList {
+                    if (result.projectSdkUpdated) {
+                        add("Project SDK")
+                    }
+
+                    if (result.gradleJvmUpdated) {
+                        add("linked Gradle JVM")
+                    }
+
+                    if (result.launcherJreUpdated) {
+                        add("explicit Ghidra Launcher JRE")
+                    }
+                }
+
+                if (updatedItems.isNotEmpty()) {
+                    append(
+                        "<br/><br/><b>Updated Java configuration:</b><br/>• " +
+                            updatedItems.joinToString("<br/>• ")
+                    )
+                }
+            }
+
             append(
                 "<br/><br/><b>Required follow-up:</b><br/>" +
-                    "Review the migration diagnostics and configure a compatible Project SDK, " +
-                    "linked Gradle JVM, and explicit launcher JRE if applicable. " +
-                    "Reload Gradle after resolving any global GHIDRA_INSTALL_DIR override."
+                    "Reload Gradle after resolving any global GHIDRA_INSTALL_DIR override. " +
+                    "Review remaining migration diagnostics before building or launching."
             )
         }
 
