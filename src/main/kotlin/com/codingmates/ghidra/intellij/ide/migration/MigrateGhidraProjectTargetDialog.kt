@@ -64,6 +64,10 @@ class MigrateGhidraProjectTargetDialog(
         "Set explicit Ghidra Launcher JRE to selected compatible Java SDK"
     )
 
+    private val reloadGradleCheckBox = JCheckBox(
+        "Reload Gradle after applying the migration"
+    )
+
     private var currentPlan: GhidraTargetMigrationPlan =
         planForSelectedInstallation()
 
@@ -81,11 +85,17 @@ class MigrateGhidraProjectTargetDialog(
 
         updatePlan()
         updateCompatibleSdkOptions()
+        updateGradleReloadOption()
+
+        updateGradleJvmCheckBox.addActionListener {
+            updateGradleReloadOption()
+        }
 
         targetInstallationComboBox.addActionListener {
             acknowledgementCheckBox.isSelected = false
             updatePlan()
             updateCompatibleSdkOptions()
+            updateGradleReloadOption()
         }
 
         init()
@@ -111,6 +121,9 @@ class MigrateGhidraProjectTargetDialog(
 
     fun shouldUpdateLauncherJre(): Boolean =
         updateLauncherJreCheckBox.isSelected
+
+    fun shouldReloadGradle(): Boolean =
+        reloadGradleCheckBox.isSelected
 
     private fun planForSelectedInstallation(): GhidraTargetMigrationPlan =
         GhidraTargetMigrationPlanner.plan(
@@ -166,6 +179,11 @@ class MigrateGhidraProjectTargetDialog(
 
             row {
                 cell(updateLauncherJreCheckBox)
+                    .align(AlignX.FILL)
+            }
+
+            row {
+                cell(reloadGradleCheckBox)
                     .align(AlignX.FILL)
             }
         }
@@ -239,6 +257,23 @@ class MigrateGhidraProjectTargetDialog(
                 GhidraTargetMigrationIssueCode.WRAPPER_GRADLE_TOO_NEW,
             )
         }
+
+    private fun updateGradleReloadOption() {
+        val canReload = GhidraGradleReloadEligibility.canReload(
+            plan = currentPlan,
+            willUpdateGradleJvm = updateGradleJvmCheckBox.isSelected,
+        )
+
+        reloadGradleCheckBox.isVisible = canReload
+        reloadGradleCheckBox.isEnabled = canReload
+
+        if (canReload) {
+            reloadGradleCheckBox.isSelected = true
+        }
+        else {
+            reloadGradleCheckBox.isSelected = false
+        }
+    }
 
     private fun hasIssue(
         vararg issueCodes: GhidraTargetMigrationIssueCode,

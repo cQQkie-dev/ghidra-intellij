@@ -18,17 +18,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import java.nio.file.Path
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
  * Migrates the runtime/build target of an existing Ghidra Extension Project.
  *
  * Stage 1 changes only the project-local Ghidra target, facet, and SLEIGH local Ant target.
- * Java SDK, launcher JRE, linked Gradle JVM, Gradle Wrapper, and Gradle reload automation are
- * intentionally deferred to later explicit migration stages.
+ * Explicitly selected Project SDK, Gradle JVM, launcher JRE, and safe Gradle reload changes may
+ * also be applied. Gradle Wrapper updates remain a separate explicit action.
  */
 class MigrateGhidraProjectTargetAction : DumbAwareAction(
     "Migrate Ghidra Project Target",
@@ -153,6 +155,13 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
                     )
                 }
 
+            if (dialog.shouldReloadGradle()) {
+                requestGradleReload(
+                    project = project,
+                    projectRoot = projectRoot,
+                )
+            }
+
             notifyMigrationCompleted(
                 project = project,
                 installation = selectedInstallation,
@@ -160,6 +169,7 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
                 sleighPropertiesFile = sleighPropertiesFile,
                 launcherCreated = launcherResult.created,
                 javaConfigurationResult = javaConfigurationResult,
+                gradleReloadRequested = dialog.shouldReloadGradle(),
             )
         }
         catch (e: Exception) {
@@ -170,6 +180,21 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
                 }",
                 "Migrate Ghidra Project Target",
             )
+        }
+    }
+
+    private fun requestGradleReload(
+        project: com.intellij.openapi.project.Project,
+        projectRoot: Path,
+    ) {
+        ApplicationManager.getApplication().invokeLater {
+            if (!project.isDisposed) {
+                ExternalSystemUtil.requestImport(
+                    project,
+                    projectRoot.toString(),
+                    GradleConstants.SYSTEM_ID,
+                )
+            }
         }
     }
 
@@ -231,6 +256,7 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
         javaConfigurationResult:
             com.codingmates.ghidra.intellij.ide.migration
                 .GhidraProjectJavaConfigurationUpdateResult?,
+        gradleReloadRequested: Boolean,
     ) {
         val content = buildString {
             append(
@@ -289,11 +315,19 @@ class MigrateGhidraProjectTargetAction : DumbAwareAction(
                 }
             }
 
-            append(
-                "<br/><br/><b>Required follow-up:</b><br/>" +
-                    "Reload Gradle after resolving any global GHIDRA_INSTALL_DIR override. " +
-                    "Review remaining migration diagnostics before building or launching."
-            )
+            if (gradleReloadRequested) {
+                append(
+                    "<br/><br/>Gradle reload requested. Review the Gradle Sync output " +
+                        "before building or launching."
+                )
+            }
+            else {
+                append(
+                    "<br/><br/><b>Required follow-up:</b><br/>" +
+                        "Reload Gradle after resolving any global GHIDRA_INSTALL_DIR override. " +
+                        "Review remaining migration diagnostics before building or launching."
+                )
+            }
         }
 
         NotificationGroupManager.getInstance()
